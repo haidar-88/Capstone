@@ -1,3 +1,5 @@
+import heapq
+
 class Node:
     """
     Represents an autonomous vehicle / energy node.
@@ -15,7 +17,7 @@ class Node:
             latitude=0.0,
             longitude=0.0,
             velocity=0.0,                  # m/s
-            platoon_id=None,
+            platoon=None,
             is_leader=False,
             battery_health=1.0,            # 0.0 → 1.0
         ):
@@ -38,11 +40,11 @@ class Node:
         self.velocity = velocity
 
         # Platoon info
-        self.platoon_id = platoon_id
+        self.platoon = platoon
         self.is_leader = is_leader
 
         # Connections
-        self.connections_list = []
+        self.connections_list = {}
 
     def available_energy(self):
         """Energy currently available (kWh)."""
@@ -97,9 +99,9 @@ class Node:
     def position(self):
         return (self.latitude, self.longitude)
 
-    def add_connection(self, node):
+    def add_connection(self, node, edge):
         if node not in self.connections_list:
-            self.connections_list.append(node)
+            self.connections_list[node] = edge
         return True
 
     def remove_connection(self, node):
@@ -107,5 +109,58 @@ class Node:
             self.connections_list.remove(node)
             return True
         return False
+    
+    def prepare_data_for_dijkstra(self):
 
+        # 1. Determine how many nodes we have
+        V = self.platoon.node_number
+        
+        # 2. Create the empty 'adj' list structure
+        adj = [[] for _ in range(V)]
+        
+        # 3. Fill 'adj' using your hashmaps
+        for node in self.platoon.nodes:
+            u = node.node_id
+            # Iterate through your dict {node: edge}
+            for neighbor_node, edge_obj in node.connections_list.items():
+                v = neighbor_node.node_id
+                w = edge_obj.edge_cost # Your AI-calculated energy/distance cost
+                
+                adj[u].append((v, w))
+                
+        return adj
 
+    def dijkstra(self):
+
+        src = self.node_id
+        adj = self.prepare_data_for_dijkstra()
+
+        V = len(adj)
+
+        # Min-heap (priority queue) storing pairs of (distance, node)
+        pq = []
+
+        dist = [999999] * V
+
+        # Distance from source to itself is 0
+        dist[src] = 0
+        heapq.heappush(pq, (0, src))
+
+        # Process the queue until all reachable vertices are finalized
+        while pq:
+            d, u = heapq.heappop(pq)
+
+            # If this distance not the latest shortest one, skip it
+            if d > dist[u]:
+                continue
+
+            # Explore all neighbors of the current vertex
+            for v, w in adj[u]:
+
+                # If we found a shorter path to v through u, update it
+                if dist[u] + w < dist[v]:
+                    dist[v] = dist[u] + w
+                    heapq.heappush(pq, (dist[v], v))
+
+        # Return the final shortest distances from the source
+        return dist

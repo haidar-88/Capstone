@@ -10,6 +10,7 @@ class Edge:
         self.transfer_efficiency = self.calculate_transfer_efficiency()
         self.energy_loss = 0.0  # kWh lost in last transfer
         self.expected_transfer_time = 0.0  # seconds, updated dynamically
+        self.edge_cost = self.calculate_cost()
 
     def calculate_transfer_efficiency(self):
         """
@@ -34,3 +35,11 @@ class Edge:
             # time in hours × 3600 = seconds
             self.expected_transfer_time = (requested_energy_kwh / max_power) * 3600.0
         return self.expected_transfer_time
+    
+    def calculate_cost(self):
+        w1 = 0.3
+        w2 = 0.3
+        w3 = 0.2
+        w4 = 0.2
+        cost = w1 * self.distance + w2 * self.energy_loss + w3 * self.expected_transfer_time + w4 * self.transfer_efficiency
+        return cost
