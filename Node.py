@@ -19,7 +19,7 @@ class Node:
             velocity=0.0,                  # m/s
             platoon=None,
             is_leader=False,
-            battery_health=1.0,            # 0.0 → 1.0
+            battery_health=1.0             # 0.0 → 1.0
         ):
         
         # Identity
@@ -63,6 +63,10 @@ class Node:
         energy_required = power_kw / 3600.0  # kWh for 1 second
 
         return (self.battery_energy_kwh - energy_required) >= self.min_energy_kwh
+    
+    def request_power(self, power):
+        self.platoon.update_total_energy_demand(power)
+        return True
     
     def drain_power(self, power_kw):
         """
@@ -111,7 +115,6 @@ class Node:
         return False
     
     def prepare_data_for_dijkstra(self):
-
         # 1. Determine how many nodes we have
         V = self.platoon.node_number
         
@@ -164,3 +167,23 @@ class Node:
 
         # Return the final shortest distances from the source
         return dist
+    
+    def __str__(self):
+        temp = {x.node_id : y.edge_cost for x,y in self.connections_list.items()}
+        return (
+            f"Node Status:\n"
+            f"-----------\n"
+            f"Node ID              : {self.node_id}\n"
+            f"Energy               : {self.battery_energy_kwh:.3f} / {self.battery_capacity_kwh:.3f} kWh\n"
+            f"Minimum energy       : {self.min_energy_kwh:.3f} kWh\n"
+            f"Battery health       : {self.battery_health:.2f}\n"
+            f"Max charge rate      : {self.max_transfer_rate_in:.1f} kW\n"
+            f"Max discharge rate   : {self.max_transfer_rate_out:.1f} kW\n"
+            f"Battery Health       : {self.battery_health:.1f}\n"
+            f"Position (lat, lon)  : ({self.latitude:.5f}, {self.longitude:.5f})\n"
+            f"Velocity             : {self.velocity:.2f} m/s\n"
+            f"Platoon              : {self.platoon.platoon_id}\n"
+            f"Leader               : {self.is_leader}\n"
+            f"Connections          : {temp}"
+        )
+
