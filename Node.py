@@ -10,7 +10,7 @@ class Node:
             self,
             node_id,
             battery_capacity_kwh,          # Total battery capacity (kWh)
-            initial_energy_kwh,            # Current energy (kWh)
+            battery_energy_kwh,            # Current energy (kWh)
             min_energy_kwh,                # Minimum allowed energy (kWh)
             max_transfer_rate_in=50.0,     # Max charge power (kW)
             max_transfer_rate_out=50.0,    # Max discharge power (kW)
@@ -20,6 +20,12 @@ class Node:
             platoon=None,
             is_leader=False,
             battery_health=1.0,            # 0.0 → 1.0
+            etx=1.0,
+            delay=0.0,
+            willingness=3,
+            lane_weight=0.5,
+            link_stability=1.0,
+            link_status="SYM"
         ):
         
         # Identity
@@ -27,7 +33,7 @@ class Node:
 
         # Battery (REAL units)
         self.battery_capacity_kwh = battery_capacity_kwh
-        self.battery_energy_kwh = min(initial_energy_kwh, battery_capacity_kwh)
+        self.battery_energy_kwh = min(battery_energy_kwh, battery_capacity_kwh)
         self.min_energy_kwh = min_energy_kwh
 
         self.max_transfer_rate_in = max_transfer_rate_in
@@ -43,8 +49,44 @@ class Node:
         self.platoon = platoon
         self.is_leader = is_leader
 
-        # Connections
+        # Connections (Physical/Platoon)
         self.connections_list = {}
+
+        # --- Network / MVCCP Layer Info ---
+        # These fields are used when this Node object represents a remote neighbor
+        self.ip_address = "0.0.0.0"
+        self.last_seen = 0.0
+        
+        # QoS Metrics
+        self.etx = etx
+        self.delay = delay
+        self.willingness = willingness
+        self.lane_weight = lane_weight
+        self.link_stability = link_stability
+        
+        # Topology
+        self.two_hop_neighbors = set()
+        self.link_status = link_status
+
+        # Internal Protocol Tables (Instantiated as requested)
+        # We use inner imports to avoid circular dependency with Node.py
+        from Protocol.LayerA_NeighborDiscovery.neighbor_table import NeighborTable
+        from Protocol.LayerB_ProviderAnnouncement.provider_table import ProviderTable
+        
+        # Node acts as the context for these tables (duck typing)
+        # Tables expect: context.current_time, context.node_id
+        self.neighbor_table = NeighborTable(self)
+        self.provider_table = ProviderTable(self)
+
+    @property
+    def current_time(self):
+        """
+        Context-like property for tables. 
+        In simulation, this might need to be updated externally or synced.
+        For now, returns system time or a tracked time.
+        """
+        import time
+        return time.time()
 
     def available_energy(self):
         """Energy currently available (kWh)."""

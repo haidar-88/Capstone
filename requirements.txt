@@ -1,0 +1,10 @@
+# Pure Python Dependencies
+# The core protocol logic uses only standard library modules (struct, math, etc.)
+
+# Development/Testing dependencies (optional)
+# pytest
+# flake8
+
+# System Dependencies (Not pip installable)
+# ns-3 (with Python bindings enabled, e.g., --enable-python)
+# The ns3_adapter.py module requires the 'ns' python module provided by the ns-3 environment.
