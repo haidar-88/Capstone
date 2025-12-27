@@ -38,8 +38,8 @@ class Edge:
     
     def calculate_cost(self):
         w1 = 0.3
-        w2 = 0.3
+        w2 = 0.5
         w3 = 0.2
-        w4 = 0.2
+        w4 = 0.1
         cost = w1 * self.distance + w2 * self.energy_loss + w3 * self.expected_transfer_time + w4 * self.transfer_efficiency
         return cost

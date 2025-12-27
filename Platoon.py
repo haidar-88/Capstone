@@ -13,15 +13,20 @@ class Platoon:
         self.platoon_mobility_pattern = 0 #(Expected length of time the platoon stays together)
 
     def can_add_node(self):
-        return self.max_nodes < self.node_number
+        return self.max_nodes > self.node_number
 
     def add_node(self, node):
+        if not self.can_add_node():
+            print(f"MAX NODES IN PLATOONS REACHED CAN'T ADD MORE CARS TO THE PLATOON WITH ID: {self.platoon_id}")
+            return False
         self.node_number = self.node_number + 1
         self.nodes.append(node)
         self.update_available_charger_power(node.battery_energy_kwh)
         return True
 
     def remove_node(self, node):
+        if not node in self.nodes:
+            return False
         self.node_number = self.node_number - 1
         self.nodes.pop(node)
         self.update_available_charger_power(node.battery_energy_kwh)

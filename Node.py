@@ -116,7 +116,7 @@ class Node:
     
     def prepare_data_for_dijkstra(self):
         # 1. Determine how many nodes we have
-        V = self.platoon.node_number
+        V = self.platoon.node_number + 1
         
         # 2. Create the empty 'adj' list structure
         adj = [[] for _ in range(V)]
@@ -143,10 +143,12 @@ class Node:
         # Min-heap (priority queue) storing pairs of (distance, node)
         pq = []
 
-        dist = [999999] * V
+        path_to = [-1] * (V + 1)
+        dist = [float('inf')] * (V + 1)
 
         # Distance from source to itself is 0
         dist[src] = 0
+        path_to[src] = src
         heapq.heappush(pq, (0, src))
 
         # Process the queue until all reachable vertices are finalized
@@ -163,10 +165,11 @@ class Node:
                 # If we found a shorter path to v through u, update it
                 if dist[u] + w < dist[v]:
                     dist[v] = dist[u] + w
+                    path_to[v] = u
                     heapq.heappush(pq, (dist[v], v))
 
         # Return the final shortest distances from the source
-        return dist
+        return dist, path_to
     
     def __str__(self):
         temp = {x.node_id : y.edge_cost for x,y in self.connections_list.items()}
