@@ -1,5 +1,7 @@
 import heapq
 
+########## ADD A MMESSAGE FOR EACH CAR ##########
+
 class Node:
     """
     Represents an autonomous vehicle / energy node.
@@ -42,6 +44,9 @@ class Node:
         # Platoon info
         self.platoon = platoon
         self.is_leader = is_leader
+
+        # For Network Messages
+        #self.Message = Message.Message()
 
         # Connections
         self.connections_list = {}

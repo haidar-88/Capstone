@@ -1,5 +1,7 @@
-import Node, Edge, Platoon
-from Smart_Decision import pick_a_charger
+import Edge, Node, Platoon
+
+from AI.Smart_Decision import pick_a_charger
+
 # Create platoon
 platoon1 = Platoon.Platoon(1001)
 
@@ -88,5 +90,5 @@ print("=== Platoon Summary ===")
 print(platoon1)
 
 print("--------------------------------------", end="\n\n")
-choosen_charger = pick_a_charger(car2, platoon1, 100)
-print(choosen_charger)
+#choosen_charger = pick_a_charger(car2, platoon1, 100)
+#print(choosen_charger)
