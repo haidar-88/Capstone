@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    MVCCP Highway Co-Simulation Configuration
+    
+    Updated for 1km highway with:
+    - Slower vehicle speeds (20 m/s)
+    - RREH POIs (green markers)
+    - Bigger vehicle visualization
+-->
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+               xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <!-- Road network -->
+        <net-file value="highway.net.xml"/>
+        
+        <!-- Vehicle routes and demands -->
+        <route-files value="highway.rou.xml"/>
+        
+        <!-- RREH Points of Interest -->
+        <additional-files value="highway.poi.xml"/>
+    </input>
+
+    <output>
+        <!-- Trip information output -->
+        <tripinfo-output value="tripinfo.xml"/>
+        
+        <!-- Summary statistics -->
+        <summary-output value="summary.xml"/>
+        
+        <!-- Suppress warnings -->
+        <no-warnings value="false"/>
+    </output>
+
+    <time>
+        <!-- Simulation start time -->
+        <begin value="0"/>
+        
+        <!-- Simulation end time (120 seconds for smaller network) -->
+        <end value="120"/>
+        
+        <!-- Step length matching CoSimOrchestrator (0.5s) -->
+        <step-length value="0.5"/>
+    </time>
+
+    <processing>
+        <!-- Random seed for reproducibility -->
+        <seed value="42"/>
+        
+        <!-- Allow teleporting stuck vehicles -->
+        <time-to-teleport value="120"/>
+        
+        <!-- Lateral resolution for multi-lane highways -->
+        <lateral-resolution value="0.8"/>
+    </processing>
+
+    <routing>
+        <!-- Use fastest path routing -->
+        <routing-algorithm value="dijkstra"/>
+    </routing>
+
+    <report>
+        <!-- Verbose output for debugging -->
+        <verbose value="true"/>
+        
+        <!-- Don't output step log (too noisy) -->
+        <no-step-log value="true"/>
+        
+        <!-- Duration statistics at end -->
+        <duration-log.statistics value="true"/>
+    </report>
+
+    <gui_only>
+        <!-- GUI settings -->
+        <gui-settings-file value="highway.view.xml"/>
+        
+        <!-- Start in running state -->
+        <start value="true"/>
+        
+        <!-- Delay between steps (ms) for visualization -->
+        <delay value="100"/>
+    </gui_only>
+
+</configuration>

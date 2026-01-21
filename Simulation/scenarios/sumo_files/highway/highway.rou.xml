@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    MVCCP Highway Scenario - Vehicle Routes
+    
+    Updated for 1km highway:
+    - Westbound route from east to west
+    - Vehicle speeds adjusted for 20 m/s highway
+    - Reduced number of vehicles for smaller network
+-->
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+
+    <!-- Vehicle type: Standard EV -->
+    <vType id="ev_standard" 
+           accel="2.5" 
+           decel="4.5" 
+           sigma="0.5" 
+           length="4.5" 
+           minGap="2.5" 
+           maxSpeed="20.0" 
+           speedFactor="1.0"
+           color="0,128,255"/>
+    
+    <!-- Vehicle type: Low battery EV (red, slightly slower) -->
+    <vType id="ev_low_battery" 
+           accel="2.0" 
+           decel="4.5" 
+           sigma="0.3" 
+           length="4.5" 
+           minGap="2.5" 
+           maxSpeed="18.0" 
+           speedFactor="0.9"
+           color="255,100,100"/>
+    
+    <!-- Vehicle type: High energy EV (blue-green, potential platoon head) -->
+    <vType id="ev_high_energy" 
+           accel="2.5" 
+           decel="4.5" 
+           sigma="0.5" 
+           length="4.5" 
+           minGap="2.5" 
+           maxSpeed="20.0" 
+           speedFactor="1.0"
+           color="100,255,100"/>
+
+    <!-- Westbound route: East to West -->
+    <route id="westbound" edges="hw_1_rev hw_2_rev hw_3_rev hw_4_rev"/>
+    
+    <!-- Eastbound route: West to East -->
+    <route id="eastbound" edges="hw_1 hw_2 hw_3 hw_4"/>
+
+    <!-- ============================================================ -->
+    <!-- LOW BATTERY VEHICLES (5 vehicles) - CONSUMERS (red)         -->
+    <!-- ============================================================ -->
+    
+    <vehicle id="veh_low_0" type="ev_low_battery" route="westbound" depart="0.0" departLane="0" departSpeed="15.0"/>
+    <vehicle id="veh_low_1" type="ev_low_battery" route="westbound" depart="5.0" departLane="1" departSpeed="16.0"/>
+    <vehicle id="veh_low_2" type="ev_low_battery" route="westbound" depart="12.0" departLane="2" departSpeed="15.0"/>
+    <vehicle id="veh_low_3" type="ev_low_battery" route="westbound" depart="20.0" departLane="0" departSpeed="14.0"/>
+    <vehicle id="veh_low_4" type="ev_low_battery" route="westbound" depart="30.0" departLane="1" departSpeed="16.0"/>
+
+    <!-- ============================================================ -->
+    <!-- MEDIUM BATTERY VEHICLES (4 vehicles) - May switch roles     -->
+    <!-- ============================================================ -->
+    
+    <vehicle id="veh_mid_0" type="ev_standard" route="westbound" depart="3.0" departLane="1" departSpeed="18.0"/>
+    <vehicle id="veh_mid_1" type="ev_standard" route="westbound" depart="10.0" departLane="2" departSpeed="19.0"/>
+    <vehicle id="veh_mid_2" type="ev_standard" route="westbound" depart="22.0" departLane="0" departSpeed="17.0"/>
+    <vehicle id="veh_mid_3" type="ev_standard" route="westbound" depart="35.0" departLane="1" departSpeed="18.0"/>
+
+    <!-- ============================================================ -->
+    <!-- HIGH BATTERY VEHICLES (3 vehicles) - PLATOON HEADS (green)  -->
+    <!-- ============================================================ -->
+    
+    <vehicle id="veh_high_0" type="ev_high_energy" route="westbound" depart="8.0" departLane="2" departSpeed="19.0"/>
+    <vehicle id="veh_high_1" type="ev_high_energy" route="westbound" depart="25.0" departLane="1" departSpeed="18.0"/>
+    <vehicle id="veh_high_2" type="ev_high_energy" route="westbound" depart="40.0" departLane="2" departSpeed="19.0"/>
+
+</routes>

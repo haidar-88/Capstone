@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-01-19 19:15:43 by Eclipse SUMO GUI Version 1.18.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="/home/sami/CAPSTONE/Simulation/scenarios/sumo_files/highway/highway.net.xml"/>
+        <route-files value="/home/sami/CAPSTONE/Simulation/scenarios/sumo_files/highway/highway.rou.xml"/>
+        <additional-files value="/home/sami/CAPSTONE/Simulation/scenarios/sumo_files/highway/highway.poi.xml"/>
+    </input>
+
+    <output>
+        <summary-output value="/home/sami/CAPSTONE/Simulation/scenarios/sumo_files/highway/summary.xml"/>
+        <tripinfo-output value="/home/sami/CAPSTONE/Simulation/scenarios/sumo_files/highway/tripinfo.xml"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="120"/>
+        <step-length value="0.5"/>
+    </time>
+
+    <processing>
+        <lateral-resolution value="0.8"/>
+        <time-to-teleport value="120"/>
+    </processing>
+
+    <routing>
+        <routing-algorithm value="dijkstra"/>
+    </routing>
+
+    <report>
+        <verbose value="true"/>
+        <no-warnings value="false"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <traci_server>
+        <remote-port value="37539"/>
+    </traci_server>
+
+    <random_number>
+        <seed value="42"/>
+    </random_number>
+
+    <gui_only>
+        <gui-settings-file value="/home/sami/CAPSTONE/Simulation/scenarios/sumo_files/highway/highway.view.xml"/>
+        <quit-on-end value="true"/>
+        <start value="true"/>
+        <delay value="100"/>
+    </gui_only>
+
+</configuration>
+-->
+
+<tripinfos xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/tripinfo_file.xsd">
+    <tripinfo id="veh_low_0" depart="0.00" departLane="hw_1_rev_0" departPos="4.60" departPosLat="0.00" departSpeed="15.00" departDelay="0.00" arrival="59.50" arrivalLane="hw_4_rev_0" arrivalPos="95.72" arrivalPosLat="0.00" arrivalSpeed="16.83" duration="59.50" routeLength="995.50" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="0.57" rerouteNo="0" devices="tripinfo_veh_low_0" vType="ev_low_battery" speedFactor="0.85" vaporized=""/>
+    <tripinfo id="veh_low_1" depart="5.00" departLane="hw_1_rev_1" departPos="4.60" departPosLat="0.00" departSpeed="16.00" departDelay="0.00" arrival="61.00" arrivalLane="hw_4_rev_0" arrivalPos="95.72" arrivalPosLat="0.00" arrivalSpeed="17.94" duration="56.00" routeLength="995.50" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="0.51" rerouteNo="0" devices="tripinfo_veh_low_1" vType="ev_low_battery" speedFactor="0.97" vaporized=""/>
+    <tripinfo id="veh_low_2" depart="12.00" departLane="hw_1_rev_2" departPos="4.60" departPosLat="0.00" departSpeed="15.00" departDelay="0.00" arrival="68.00" arrivalLane="hw_4_rev_0" arrivalPos="95.72" arrivalPosLat="0.00" arrivalSpeed="17.82" duration="56.00" routeLength="995.50" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="0.55" rerouteNo="0" devices="tripinfo_veh_low_2" vType="ev_low_battery" speedFactor="1.06" vaporized=""/>
+    <tripinfo id="veh_low_3" depart="20.00" departLane="hw_1_rev_0" departPos="4.60" departPosLat="0.00" departSpeed="14.00" departDelay="0.00" arrival="84.50" arrivalLane="hw_4_rev_0" arrivalPos="95.72" arrivalPosLat="0.00" arrivalSpeed="15.55" duration="64.50" routeLength="995.50" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="0.62" rerouteNo="0" devices="tripinfo_veh_low_3" vType="ev_low_battery" speedFactor="0.78" vaporized=""/>
+    <tripinfo id="veh_mid_3" depart="35.00" departLane="hw_1_rev_1" departPos="4.60" departPosLat="0.00" departSpeed="18.00" departDelay="0.00" arrival="86.00" arrivalLane="hw_4_rev_1" arrivalPos="95.72" arrivalPosLat="0.00" arrivalSpeed="19.86" duration="51.00" routeLength="995.50" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="0.84" rerouteNo="0" devices="tripinfo_veh_mid_3" vType="ev_standard" speedFactor="1.08" vaporized=""/>
+    <tripinfo id="veh_low_4" depart="30.00" departLane="hw_1_rev_1" departPos="4.60" departPosLat="0.00" departSpeed="16.00" departDelay="0.00" arrival="90.50" arrivalLane="hw_4_rev_0" arrivalPos="95.72" arrivalPosLat="0.00" arrivalSpeed="16.33" duration="60.50" routeLength="995.50" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="0.54" rerouteNo="0" devices="tripinfo_veh_low_4" vType="ev_low_battery" speedFactor="0.83" vaporized=""/>
+    <tripinfo id="veh_high_2" depart="40.00" departLane="hw_1_rev_2" departPos="4.60" departPosLat="0.00" departSpeed="19.00" departDelay="0.00" arrival="91.00" arrivalLane="hw_4_rev_1" arrivalPos="95.72" arrivalPosLat="0.00" arrivalSpeed="19.61" duration="51.00" routeLength="995.50" waitingTime="0.00" waitingCount="0" stopTime="0.00" timeLoss="0.82" rerouteNo="0" devices="tripinfo_veh_high_2" vType="ev_high_energy" speedFactor="1.03" vaporized=""/>
+</tripinfos>

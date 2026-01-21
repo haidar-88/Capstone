@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    SUMO-GUI View Settings for MVCCP Highway Scenario
+    
+    Configured for better visualization:
+    - Centered on 1km highway
+    - Larger vehicles for visibility
+-->
+<viewsettings>
+    <!-- Use real world scheme as base -->
+    <scheme name="real world"/>
+    
+    <!-- Viewport: Center on 1km highway (x=500, y=100) -->
+    <viewport zoom="200" x="500" y="100" angle="0"/>
+    
+    <!-- Slower delay for better observation -->
+    <delay value="100"/>
+</viewsettings>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    MVCCP Highway Scenario - Node Definitions
+    
+    1km highway with 3 segments:
+    - west (x=0) to mid (x=500) to east (x=1000)
+    - Two ramps at x=100 (west_ramp) and x=900 (east_ramp)
+    - y=100 is the highway baseline
+    - On/off ramps at y=0
+-->
+<nodes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/nodes_file.xsd">
+
+    <!-- Main highway endpoints -->
+    <node id="west" x="0" y="100" type="dead_end"/>
+    <node id="east" x="1000" y="100" type="dead_end"/>
+    
+    <!-- Mid-point junction (for RREH placement reference) -->
+    <node id="mid" x="500" y="100" type="priority"/>
+    
+    <!-- Ramp junctions -->
+    <node id="west_ramp" x="100" y="100" type="priority"/>
+    <node id="east_ramp" x="900" y="100" type="priority"/>
+    
+    <!-- On/off ramp endpoints -->
+    <node id="onramp_start" x="95" y="0" type="dead_end"/>
+    <node id="offramp_end" x="905" y="0" type="dead_end"/>
+
+</nodes>

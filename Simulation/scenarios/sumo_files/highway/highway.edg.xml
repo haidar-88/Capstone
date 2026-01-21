@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    MVCCP Highway Scenario - Edge Definitions
+    
+    1km highway with bidirectional lanes
+    Speed: 20 m/s (~72 km/h)
+    Lanes: 3 per direction
+-->
+<edges xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/edges_file.xsd">
+
+    <!-- ============================================================ -->
+    <!-- Eastbound edges (bottom lanes, lower y values) -->
+    <!-- ============================================================ -->
+    
+    <edge id="hw_1" from="west" to="west_ramp" numLanes="3" speed="20"/>
+    <edge id="hw_2" from="west_ramp" to="mid" numLanes="3" speed="20"/>
+    <edge id="hw_3" from="mid" to="east_ramp" numLanes="3" speed="20"/>
+    <edge id="hw_4" from="east_ramp" to="east" numLanes="3" speed="20"/>
+
+    <!-- ============================================================ -->
+    <!-- Westbound edges (top lanes, higher y values) -->
+    <!-- ============================================================ -->
+    
+    <edge id="hw_1_rev" from="east" to="east_ramp" numLanes="3" speed="20"/>
+    <edge id="hw_2_rev" from="east_ramp" to="mid" numLanes="3" speed="20"/>
+    <edge id="hw_3_rev" from="mid" to="west_ramp" numLanes="3" speed="20"/>
+    <edge id="hw_4_rev" from="west_ramp" to="west" numLanes="3" speed="20"/>
+
+    <!-- ============================================================ -->
+    <!-- On/off ramps (single lane, slower speed) -->
+    <!-- ============================================================ -->
+    
+    <edge id="onramp" from="onramp_start" to="west_ramp" numLanes="1" speed="15"/>
+    <edge id="offramp" from="east_ramp" to="offramp_end" numLanes="1" speed="15"/>
+
+</edges>

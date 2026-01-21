@@ -1,10 +1,43 @@
+# MVCCP Protocol Dependencies
+# ============================
+
 # Pure Python Dependencies
 # The core protocol logic uses only standard library modules (struct, math, etc.)
 
+# Simulation Dependencies
+# -----------------------
+# SUMO/TraCI for vehicle mobility simulation
+traci>=1.14.0
+sumolib>=1.14.0
+
 # Development/Testing dependencies (optional)
-# pytest
-# flake8
+pytest>=7.0.0
+pytest-cov>=4.0.0
+flake8>=6.0.0
 
 # System Dependencies (Not pip installable)
-# ns-3 (with Python bindings enabled, e.g., --enable-python)
-# The ns3_adapter.py module requires the 'ns' python module provided by the ns-3 environment.
+# =========================================
+#
+# 1. SUMO (Simulation of Urban MObility)
+#    Download: https://sumo.dlr.de/docs/Installing/
+#    Set SUMO_HOME environment variable after installation
+#
+# 2. ns-3 (Network Simulator, optional for realistic 802.11p)
+#    Build with Python bindings: ./waf configure --enable-python
+#    The ns3_wave_adapter.py module requires the 'ns' python module
+#
+# Installation Guide:
+# -------------------
+# 1. Install Python dependencies:
+#    pip install -r requirements.txt
+#
+# 2. Install SUMO:
+#    - Windows: Download installer from https://sumo.dlr.de
+#    - Ubuntu: sudo apt-get install sumo sumo-tools
+#    - macOS: brew install sumo
+#
+# 3. (Optional) Build ns-3 with Python bindings:
+#    git clone https://gitlab.com/nsnam/ns-3-dev.git
+#    cd ns-3-dev
+#    ./waf configure --enable-python --enable-examples
+#    ./waf build

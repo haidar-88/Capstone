@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-01-19 14:55:36 by Eclipse SUMO netconvert Version 1.18.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <node-files value="highway.nod.xml"/>
+        <edge-files value="highway.edg.xml"/>
+    </input>
+
+    <output>
+        <output-file value="highway.net.xml"/>
+    </output>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+    </junctions>
+
+</configuration>
+-->
+
+<net version="1.16" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,0.00" convBoundary="0.00,0.00,1000.00,100.00" origBoundary="0.00,0.00,1000.00,100.00" projParameter="!"/>
+
+    <edge id=":east_ramp_0" function="internal">
+        <lane id=":east_ramp_0_0" index="0" speed="20.00" length="10.81" shape="904.28,108.00 893.47,108.00"/>
+        <lane id=":east_ramp_0_1" index="1" speed="20.00" length="10.81" shape="904.28,104.80 893.47,104.80"/>
+        <lane id=":east_ramp_0_2" index="2" speed="20.00" length="10.81" shape="904.28,101.60 893.47,101.60"/>
+    </edge>
+    <edge id=":east_ramp_3" function="internal">
+        <lane id=":east_ramp_3_0" index="0" speed="8.66" length="2.19" shape="904.28,101.60 902.23,100.84"/>
+    </edge>
+    <edge id=":east_ramp_8" function="internal">
+        <lane id=":east_ramp_8_0" index="0" speed="8.66" length="15.25" shape="902.23,100.84 901.72,100.66 900.00,97.83 899.12,93.12 899.07,86.52"/>
+    </edge>
+    <edge id=":east_ramp_4" function="internal">
+        <lane id=":east_ramp_4_0" index="0" speed="6.56" length="8.84" shape="893.47,92.00 895.82,91.66 897.53,90.63 898.62,88.92 899.07,86.52"/>
+    </edge>
+    <edge id=":east_ramp_5" function="internal">
+        <lane id=":east_ramp_5_0" index="0" speed="20.00" length="10.81" shape="893.47,92.00 904.28,92.00"/>
+        <lane id=":east_ramp_5_1" index="1" speed="20.00" length="10.81" shape="893.47,95.20 904.28,95.20"/>
+        <lane id=":east_ramp_5_2" index="2" speed="20.00" length="10.81" shape="893.47,98.40 904.28,98.40"/>
+    </edge>
+    <edge id=":mid_0" function="internal">
+        <lane id=":mid_0_0" index="0" speed="20.00" length="0.10" shape="500.00,108.00 500.00,108.00"/>
+        <lane id=":mid_0_1" index="1" speed="20.00" length="0.10" shape="500.00,104.80 500.00,104.80"/>
+        <lane id=":mid_0_2" index="2" speed="20.00" length="0.10" shape="500.00,101.60 500.00,101.60"/>
+    </edge>
+    <edge id=":mid_3" function="internal">
+        <lane id=":mid_3_0" index="0" speed="20.00" length="0.10" shape="500.00,92.00 500.00,92.00"/>
+        <lane id=":mid_3_1" index="1" speed="20.00" length="0.10" shape="500.00,95.20 500.00,95.20"/>
+        <lane id=":mid_3_2" index="2" speed="20.00" length="0.10" shape="500.00,98.40 500.00,98.40"/>
+    </edge>
+    <edge id=":west_ramp_0" function="internal">
+        <lane id=":west_ramp_0_0" index="0" speed="20.00" length="10.81" shape="106.53,108.00 95.72,108.00"/>
+        <lane id=":west_ramp_0_1" index="1" speed="20.00" length="10.81" shape="106.53,104.80 95.72,104.80"/>
+        <lane id=":west_ramp_0_2" index="2" speed="20.00" length="10.81" shape="106.53,101.60 95.72,101.60"/>
+    </edge>
+    <edge id=":west_ramp_3" function="internal">
+        <lane id=":west_ramp_3_0" index="0" speed="6.56" length="8.84" shape="100.93,86.52 101.38,88.92 102.47,90.63 104.18,91.66 106.53,92.00"/>
+    </edge>
+    <edge id=":west_ramp_4" function="internal">
+        <lane id=":west_ramp_4_0" index="0" speed="9.34" length="20.48" shape="100.93,86.52 100.94,94.52 100.08,100.23 98.34,103.66 95.72,104.80"/>
+        <lane id=":west_ramp_4_1" index="1" speed="8.66" length="17.43" shape="100.93,86.52 100.88,93.12 100.00,97.83 98.28,100.66 95.72,101.60"/>
+    </edge>
+    <edge id=":west_ramp_6" function="internal">
+        <lane id=":west_ramp_6_0" index="0" speed="20.00" length="10.81" shape="95.72,92.00 106.53,92.00"/>
+        <lane id=":west_ramp_6_1" index="1" speed="20.00" length="10.81" shape="95.72,95.20 106.53,95.20"/>
+        <lane id=":west_ramp_6_2" index="2" speed="20.00" length="10.81" shape="95.72,98.40 106.53,98.40"/>
+    </edge>
+
+    <edge id="hw_1" from="west" to="west_ramp" priority="-1">
+        <lane id="hw_1_0" index="0" speed="20.00" length="95.72" shape="0.00,92.00 95.72,92.00"/>
+        <lane id="hw_1_1" index="1" speed="20.00" length="95.72" shape="0.00,95.20 95.72,95.20"/>
+        <lane id="hw_1_2" index="2" speed="20.00" length="95.72" shape="0.00,98.40 95.72,98.40"/>
+    </edge>
+    <edge id="hw_1_rev" from="east" to="east_ramp" priority="-1">
+        <lane id="hw_1_rev_0" index="0" speed="20.00" length="95.72" shape="1000.00,108.00 904.28,108.00"/>
+        <lane id="hw_1_rev_1" index="1" speed="20.00" length="95.72" shape="1000.00,104.80 904.28,104.80"/>
+        <lane id="hw_1_rev_2" index="2" speed="20.00" length="95.72" shape="1000.00,101.60 904.28,101.60"/>
+    </edge>
+    <edge id="hw_2" from="west_ramp" to="mid" priority="-1">
+        <lane id="hw_2_0" index="0" speed="20.00" length="393.47" shape="106.53,92.00 500.00,92.00"/>
+        <lane id="hw_2_1" index="1" speed="20.00" length="393.47" shape="106.53,95.20 500.00,95.20"/>
+        <lane id="hw_2_2" index="2" speed="20.00" length="393.47" shape="106.53,98.40 500.00,98.40"/>
+    </edge>
+    <edge id="hw_2_rev" from="east_ramp" to="mid" priority="-1">
+        <lane id="hw_2_rev_0" index="0" speed="20.00" length="393.47" shape="893.47,108.00 500.00,108.00"/>
+        <lane id="hw_2_rev_1" index="1" speed="20.00" length="393.47" shape="893.47,104.80 500.00,104.80"/>
+        <lane id="hw_2_rev_2" index="2" speed="20.00" length="393.47" shape="893.47,101.60 500.00,101.60"/>
+    </edge>
+    <edge id="hw_3" from="mid" to="east_ramp" priority="-1">
+        <lane id="hw_3_0" index="0" speed="20.00" length="393.47" shape="500.00,92.00 893.47,92.00"/>
+        <lane id="hw_3_1" index="1" speed="20.00" length="393.47" shape="500.00,95.20 893.47,95.20"/>
+        <lane id="hw_3_2" index="2" speed="20.00" length="393.47" shape="500.00,98.40 893.47,98.40"/>
+    </edge>
+    <edge id="hw_3_rev" from="mid" to="west_ramp" priority="-1">
+        <lane id="hw_3_rev_0" index="0" speed="20.00" length="393.47" shape="500.00,108.00 106.53,108.00"/>
+        <lane id="hw_3_rev_1" index="1" speed="20.00" length="393.47" shape="500.00,104.80 106.53,104.80"/>
+        <lane id="hw_3_rev_2" index="2" speed="20.00" length="393.47" shape="500.00,101.60 106.53,101.60"/>
+    </edge>
+    <edge id="hw_4" from="east_ramp" to="east" priority="-1">
+        <lane id="hw_4_0" index="0" speed="20.00" length="95.72" shape="904.28,92.00 1000.00,92.00"/>
+        <lane id="hw_4_1" index="1" speed="20.00" length="95.72" shape="904.28,95.20 1000.00,95.20"/>
+        <lane id="hw_4_2" index="2" speed="20.00" length="95.72" shape="904.28,98.40 1000.00,98.40"/>
+    </edge>
+    <edge id="hw_4_rev" from="west_ramp" to="west" priority="-1">
+        <lane id="hw_4_rev_0" index="0" speed="20.00" length="95.72" shape="95.72,108.00 0.00,108.00"/>
+        <lane id="hw_4_rev_1" index="1" speed="20.00" length="95.72" shape="95.72,104.80 0.00,104.80"/>
+        <lane id="hw_4_rev_2" index="2" speed="20.00" length="95.72" shape="95.72,101.60 0.00,101.60"/>
+    </edge>
+    <edge id="offramp" from="east_ramp" to="offramp_end" priority="-1">
+        <lane id="offramp_0" index="0" speed="15.00" length="86.71" shape="899.07,86.52 903.40,-0.08"/>
+    </edge>
+    <edge id="onramp" from="onramp_start" to="west_ramp" priority="-1">
+        <lane id="onramp_0" index="0" speed="15.00" length="86.71" shape="96.60,-0.08 100.93,86.52"/>
+    </edge>
+
+    <junction id="east" type="dead_end" x="1000.00" y="100.00" incLanes="hw_4_0 hw_4_1 hw_4_2" intLanes="" shape="1000.00,100.00 1000.00,90.40 1000.00,100.00"/>
+    <junction id="east_ramp" type="priority" x="900.00" y="100.00" incLanes="hw_1_rev_0 hw_1_rev_1 hw_1_rev_2 hw_3_0 hw_3_1 hw_3_2" intLanes=":east_ramp_0_0 :east_ramp_0_1 :east_ramp_0_2 :east_ramp_8_0 :east_ramp_4_0 :east_ramp_5_0 :east_ramp_5_1 :east_ramp_5_2" shape="904.28,109.60 904.28,90.40 902.19,89.98 901.48,89.45 900.99,88.71 900.72,87.76 900.67,86.60 897.47,86.44 896.94,88.64 896.37,89.41 895.61,89.96 894.64,90.29 893.47,90.40 893.47,109.60">
+        <request index="0" response="00000000" foes="00000000" cont="0"/>
+        <request index="1" response="00000000" foes="00000000" cont="0"/>
+        <request index="2" response="00000000" foes="00000000" cont="0"/>
+        <request index="3" response="11110000" foes="11110000" cont="1"/>
+        <request index="4" response="00000000" foes="00001000" cont="0"/>
+        <request index="5" response="00000000" foes="00001000" cont="0"/>
+        <request index="6" response="00000000" foes="00001000" cont="0"/>
+        <request index="7" response="00000000" foes="00001000" cont="0"/>
+    </junction>
+    <junction id="mid" type="priority" x="500.00" y="100.00" incLanes="hw_2_rev_0 hw_2_rev_1 hw_2_rev_2 hw_2_0 hw_2_1 hw_2_2" intLanes=":mid_0_0 :mid_0_1 :mid_0_2 :mid_3_0 :mid_3_1 :mid_3_2" shape="500.00,109.60 500.00,90.40 500.00,109.60">
+        <request index="0" response="000000" foes="000000" cont="0"/>
+        <request index="1" response="000000" foes="000000" cont="0"/>
+        <request index="2" response="000000" foes="000000" cont="0"/>
+        <request index="3" response="000000" foes="000000" cont="0"/>
+        <request index="4" response="000000" foes="000000" cont="0"/>
+        <request index="5" response="000000" foes="000000" cont="0"/>
+    </junction>
+    <junction id="offramp_end" type="dead_end" x="905.00" y="0.00" incLanes="offramp_0" intLanes="" shape="901.80,-0.16 905.00,-0.00"/>
+    <junction id="onramp_start" type="dead_end" x="95.00" y="0.00" incLanes="" intLanes="" shape="95.00,0.00 98.20,-0.16"/>
+    <junction id="west" type="dead_end" x="0.00" y="100.00" incLanes="hw_4_rev_0 hw_4_rev_1 hw_4_rev_2" intLanes="" shape="0.00,100.00 0.00,109.60 0.00,100.00"/>
+    <junction id="west_ramp" type="priority" x="100.00" y="100.00" incLanes="hw_3_rev_0 hw_3_rev_1 hw_3_rev_2 onramp_0 hw_1_0 hw_1_1 hw_1_2" intLanes=":west_ramp_0_0 :west_ramp_0_1 :west_ramp_0_2 :west_ramp_3_0 :west_ramp_4_0 :west_ramp_4_1 :west_ramp_6_0 :west_ramp_6_1 :west_ramp_6_2" shape="106.53,109.60 106.53,90.40 104.39,89.96 103.63,89.41 103.06,88.64 102.69,87.65 102.53,86.44 99.33,86.60 99.01,88.71 98.52,89.45 97.81,89.98 96.87,90.29 95.72,90.40 95.72,109.60">
+        <request index="0" response="000000000" foes="000110000" cont="0"/>
+        <request index="1" response="000000000" foes="000110000" cont="0"/>
+        <request index="2" response="000000000" foes="000110000" cont="0"/>
+        <request index="3" response="111000000" foes="111000000" cont="0"/>
+        <request index="4" response="111000111" foes="111000111" cont="0"/>
+        <request index="5" response="111000111" foes="111000111" cont="0"/>
+        <request index="6" response="000000000" foes="000111000" cont="0"/>
+        <request index="7" response="000000000" foes="000111000" cont="0"/>
+        <request index="8" response="000000000" foes="000111000" cont="0"/>
+    </junction>
+
+    <junction id=":east_ramp_8_0" type="internal" x="902.23" y="100.84" incLanes=":east_ramp_3_0 hw_3_0 hw_3_1 hw_3_2" intLanes=":east_ramp_4_0 :east_ramp_5_0 :east_ramp_5_1 :east_ramp_5_2"/>
+
+    <connection from="hw_1" to="hw_2" fromLane="0" toLane="0" via=":west_ramp_6_0" dir="s" state="M"/>
+    <connection from="hw_1" to="hw_2" fromLane="1" toLane="1" via=":west_ramp_6_1" dir="s" state="M"/>
+    <connection from="hw_1" to="hw_2" fromLane="2" toLane="2" via=":west_ramp_6_2" dir="s" state="M"/>
+    <connection from="hw_1_rev" to="hw_2_rev" fromLane="0" toLane="0" via=":east_ramp_0_0" dir="s" state="M"/>
+    <connection from="hw_1_rev" to="hw_2_rev" fromLane="1" toLane="1" via=":east_ramp_0_1" dir="s" state="M"/>
+    <connection from="hw_1_rev" to="hw_2_rev" fromLane="2" toLane="2" via=":east_ramp_0_2" dir="s" state="M"/>
+    <connection from="hw_1_rev" to="offramp" fromLane="2" toLane="0" via=":east_ramp_3_0" dir="l" state="m"/>
+    <connection from="hw_2" to="hw_3" fromLane="0" toLane="0" via=":mid_3_0" dir="s" state="M"/>
+    <connection from="hw_2" to="hw_3" fromLane="1" toLane="1" via=":mid_3_1" dir="s" state="M"/>
+    <connection from="hw_2" to="hw_3" fromLane="2" toLane="2" via=":mid_3_2" dir="s" state="M"/>
+    <connection from="hw_2_rev" to="hw_3_rev" fromLane="0" toLane="0" via=":mid_0_0" dir="s" state="M"/>
+    <connection from="hw_2_rev" to="hw_3_rev" fromLane="1" toLane="1" via=":mid_0_1" dir="s" state="M"/>
+    <connection from="hw_2_rev" to="hw_3_rev" fromLane="2" toLane="2" via=":mid_0_2" dir="s" state="M"/>
+    <connection from="hw_3" to="offramp" fromLane="0" toLane="0" via=":east_ramp_4_0" dir="r" state="M"/>
+    <connection from="hw_3" to="hw_4" fromLane="0" toLane="0" via=":east_ramp_5_0" dir="s" state="M"/>
+    <connection from="hw_3" to="hw_4" fromLane="1" toLane="1" via=":east_ramp_5_1" dir="s" state="M"/>
+    <connection from="hw_3" to="hw_4" fromLane="2" toLane="2" via=":east_ramp_5_2" dir="s" state="M"/>
+    <connection from="hw_3_rev" to="hw_4_rev" fromLane="0" toLane="0" via=":west_ramp_0_0" dir="s" state="M"/>
+    <connection from="hw_3_rev" to="hw_4_rev" fromLane="1" toLane="1" via=":west_ramp_0_1" dir="s" state="M"/>
+    <connection from="hw_3_rev" to="hw_4_rev" fromLane="2" toLane="2" via=":west_ramp_0_2" dir="s" state="M"/>
+    <connection from="onramp" to="hw_2" fromLane="0" toLane="0" via=":west_ramp_3_0" dir="r" state="m"/>
+    <connection from="onramp" to="hw_4_rev" fromLane="0" toLane="1" via=":west_ramp_4_0" dir="l" state="m"/>
+    <connection from="onramp" to="hw_4_rev" fromLane="0" toLane="2" via=":west_ramp_4_1" dir="l" state="m"/>
+
+    <connection from=":east_ramp_0" to="hw_2_rev" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":east_ramp_0" to="hw_2_rev" fromLane="1" toLane="1" dir="s" state="M"/>
+    <connection from=":east_ramp_0" to="hw_2_rev" fromLane="2" toLane="2" dir="s" state="M"/>
+    <connection from=":east_ramp_3" to="offramp" fromLane="0" toLane="0" via=":east_ramp_8_0" dir="l" state="m"/>
+    <connection from=":east_ramp_8" to="offramp" fromLane="0" toLane="0" dir="l" state="M"/>
+    <connection from=":east_ramp_4" to="offramp" fromLane="0" toLane="0" dir="r" state="M"/>
+    <connection from=":east_ramp_5" to="hw_4" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":east_ramp_5" to="hw_4" fromLane="1" toLane="1" dir="s" state="M"/>
+    <connection from=":east_ramp_5" to="hw_4" fromLane="2" toLane="2" dir="s" state="M"/>
+    <connection from=":mid_0" to="hw_3_rev" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":mid_0" to="hw_3_rev" fromLane="1" toLane="1" dir="s" state="M"/>
+    <connection from=":mid_0" to="hw_3_rev" fromLane="2" toLane="2" dir="s" state="M"/>
+    <connection from=":mid_3" to="hw_3" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":mid_3" to="hw_3" fromLane="1" toLane="1" dir="s" state="M"/>
+    <connection from=":mid_3" to="hw_3" fromLane="2" toLane="2" dir="s" state="M"/>
+    <connection from=":west_ramp_0" to="hw_4_rev" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":west_ramp_0" to="hw_4_rev" fromLane="1" toLane="1" dir="s" state="M"/>
+    <connection from=":west_ramp_0" to="hw_4_rev" fromLane="2" toLane="2" dir="s" state="M"/>
+    <connection from=":west_ramp_3" to="hw_2" fromLane="0" toLane="0" dir="r" state="M"/>
+    <connection from=":west_ramp_4" to="hw_4_rev" fromLane="0" toLane="1" dir="l" state="M"/>
+    <connection from=":west_ramp_4" to="hw_4_rev" fromLane="1" toLane="2" dir="l" state="M"/>
+    <connection from=":west_ramp_6" to="hw_2" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":west_ramp_6" to="hw_2" fromLane="1" toLane="1" dir="s" state="M"/>
+    <connection from=":west_ramp_6" to="hw_2" fromLane="2" toLane="2" dir="s" state="M"/>
+
+</net>

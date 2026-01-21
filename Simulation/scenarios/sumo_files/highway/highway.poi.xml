@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    MVCCP Highway Scenario - Points of Interest (RREHs)
+    
+    Two Roadside Renewable Energy Hubs shown as green markers
+-->
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+            xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+
+    <!-- RREH 0: Near west end of highway (x=300) -->
+    <poi id="rreh_0" type="RREH" color="0,200,0" layer="10"
+         x="300" y="100" width="20" height="20"/>
+    
+    <!-- RREH 1: Near east end of highway (x=700) -->
+    <poi id="rreh_1" type="RREH" color="0,200,0" layer="10"
+         x="700" y="100" width="20" height="20"/>
+
+</additional>
