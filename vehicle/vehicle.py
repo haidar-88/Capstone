@@ -1,8 +1,9 @@
 import heapq
+import energy_manager
 
 ########## ADD A MMESSAGE FOR EACH CAR ##########
 
-class Node:
+class Vehicle:
     """
     Represents an autonomous vehicle / energy node.
     Battery model uses REAL physical units only.
@@ -27,14 +28,15 @@ class Node:
         # Identity
         self.node_id = node_id
 
-        # Battery (REAL units)
-        self.battery_capacity_kwh = battery_capacity_kwh
-        self.battery_energy_kwh = min(initial_energy_kwh, battery_capacity_kwh)
-        self.min_energy_kwh = min_energy_kwh
+        self.battery = energy_manager.BatteryManager(
+            battery_capacity_kwh,
+            initial_energy_kwh,
+            min_energy_kwh,
+            max_transfer_rate_in,
+            max_transfer_rate_out,
+            battery_health
+        )
 
-        self.max_transfer_rate_in = max_transfer_rate_in
-        self.max_transfer_rate_out = max_transfer_rate_out
-        self.battery_health = battery_health
 
         # GPS & motion
         self.latitude = latitude
@@ -45,64 +47,20 @@ class Node:
         self.platoon = platoon
         self.is_leader = is_leader
 
-        # For Network Messages
-        #self.Message = Message.Message()
+        # --- MVCCP COMMUNICATION STATE ---
+        self.role = "CONSUMER"  # CONSUMER / PROVIDER / PLATOON_HEAD
+        self.provider_table = {}  # provider_id -> info dict
+        self.inbox = []  # received messages (simulation queue)
 
         # Connections
         self.connections_list = {}
-
-    def available_energy(self):
-        """Energy currently available (kWh)."""
-        return self.battery_energy_kwh
     
-    def can_transfer(self, power_kw):
-        """
-        Check if discharge is allowed (1 second assumed).
-        """
-
-        if self.battery_health <= 0.0:
-            return False
-
-        power_kw = min(power_kw, self.max_transfer_rate_out)
-
-        energy_required = power_kw / 3600.0  # kWh for 1 second
-
-        return (self.battery_energy_kwh - energy_required) >= self.min_energy_kwh
+    def receive_message(self, msg):
+        self.inbox.append(msg)
     
+    # Zabet hal function later
     def request_power(self, power):
         self.platoon.update_total_energy_demand(power)
-        return True
-    
-    def drain_power(self, power_kw):
-        """
-        Drain battery assuming EXACTLY 1 second per call.
-        power_kw : discharge power (kW)
-        """
-
-        if not self.can_transfer(power_kw):
-            self.battery_energy_kwh = self.min_energy_kwh
-            return False
-
-        power_kw = min(power_kw, self.max_transfer_rate_out)
-
-        energy_used = power_kw / 3600.0  # kWh per second
-
-        self.battery_energy_kwh -= energy_used
-        return True
-
-    def charge_power(self, power_kw):
-        """
-        Charge battery assuming EXACTLY 1 second per call.
-        """
-
-        power_kw = min(power_kw, self.max_transfer_rate_in)
-
-        energy_added = power_kw / 3600.0  # kWh
-
-        self.battery_energy_kwh = min(
-            self.battery_energy_kwh + energy_added,
-            self.battery_capacity_kwh
-        )
         return True
 
     def position(self):
@@ -182,11 +140,11 @@ class Node:
             f"Node Status:\n"
             f"-----------\n"
             f"Node ID              : {self.node_id}\n"
-            f"Energy               : {self.battery_energy_kwh:.3f} / {self.battery_capacity_kwh:.3f} kWh\n"
-            f"Minimum energy       : {self.min_energy_kwh:.3f} kWh\n"
-            f"Battery health       : {self.battery_health:.2f}\n"
-            f"Max charge rate      : {self.max_transfer_rate_in:.1f} kW\n"
-            f"Max discharge rate   : {self.max_transfer_rate_out:.1f} kW\n"
+            f"Energy               : {self.battery.energy_kwh:.3f} / {self.battery.capacity_kwh:.3f} kWh\n"
+            f"Minimum energy       : {self.battery.min_energy_kwh:.3f} kWh\n"
+            f"Battery health       : {self.battery.battery_health:.2f}\n"
+            f"Max charge rate      : {self.battery.max_transfer_rate_in:.1f} kW\n"
+            f"Max discharge rate   : {self.battery.max_transfer_rate_out:.1f} kW\n"
             f"Battery Health       : {self.battery_health:.1f}\n"
             f"Position (lat, lon)  : ({self.latitude:.5f}, {self.longitude:.5f})\n"
             f"Velocity             : {self.velocity:.2f} m/s\n"
