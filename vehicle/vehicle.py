@@ -1,7 +1,6 @@
 import heapq
 import energy_manager
-
-########## ADD A MMESSAGE FOR EACH CAR ##########
+from protocol import provider_table
 
 class Vehicle:
     """
@@ -48,13 +47,21 @@ class Vehicle:
         self.is_leader = is_leader
 
         # --- MVCCP COMMUNICATION STATE ---
-        self.role = "CONSUMER"  # CONSUMER / PROVIDER / PLATOON_HEAD
-        self.provider_table = {}  # provider_id -> info dict
+        self.provider_table = provider_table.ProviderTable()  # provider_id -> info dict
         self.inbox = []  # received messages (simulation queue)
 
         # Connections
         self.connections_list = {}
-    
+
+    def available_energy(self):
+        return self.battery.available_energy()
+
+    def drain_power(self, power_kw, duration_s=1):
+        return self.battery.drain(power_kw, duration_s)
+
+    def charge_power(self, power_kw, duration_s=1):
+        return self.battery.charge(power_kw, duration_s)
+
     def receive_message(self, msg):
         self.inbox.append(msg)
     

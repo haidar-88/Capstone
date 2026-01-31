@@ -10,7 +10,10 @@ class Platoon:
         self.max_nodes = 6
         self.total_energy_demand = 0
         self.available_charger_power = 0
-        self.platoon_mobility_pattern = 0 #(Expected length of time the platoon stays together)
+        self.platoon_mobility_pattern = self.calculate_mobility_pattern() #(Expected length of time the platoon stays together)
+
+    def calculate_mobility_pattern():
+        return 0
 
     def can_add_node(self):
         return self.max_nodes > self.node_number
@@ -21,7 +24,7 @@ class Platoon:
             return False
         self.node_number = self.node_number + 1
         self.nodes.append(node)
-        self.update_available_charger_power(node.battery_energy_kwh)
+        self.update_available_charger_power(node.available_energy())
         return True
 
     def remove_node(self, node):
@@ -29,7 +32,7 @@ class Platoon:
             return False
         self.node_number = self.node_number - 1
         self.nodes.pop(node)
-        self.update_available_charger_power(node.battery_energy_kwh)
+        self.update_available_charger_power(node.available_energy())
         return True
     
     def update_available_charger_power(self, power):

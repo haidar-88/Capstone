@@ -1,5 +1,3 @@
-from protocol.messages import create_join_offer
-
 class MessageHandler:
     def __init__(self, vehicle):
         self.vehicle = vehicle
@@ -19,8 +17,6 @@ class MessageHandler:
         )
 
     def handle_join_offer(self, msg):
-        if self.vehicle.role != "PROVIDER":
-            return
 
         needed = msg["needed_energy"]
         consumer_id = msg["consumer_id"]
@@ -28,3 +24,6 @@ class MessageHandler:
         if self.vehicle.energy_manager.can_share(needed):
             print(f"{self.vehicle.id} ACCEPTS {consumer_id}")
             self.vehicle.energy_manager.consume(needed)
+
+
+

@@ -37,67 +37,67 @@ Mobile providers may also act as consumers when their battery is low, enabling r
 
 ## 5. Message Overview
 
-### 5.1 HELLO
-Used for neighbor discovery. Contains:
-- node identifier
-- one-hop neighbor list and link status
-- QoS-OSLR metrics (refer to 7.4)
-- provider flag and basic energy availability + direction of travel if the node is a provider or RREH
+### 5.1 HELLO (Sent by independent vehicles searching for Platoons)
+Used for platoon discovery. Contains:
+- node ID
+- energy availability
+- position
+- max_transfer_rate_in
+- max_transfer_rate_out
 
-### 5.2 Provider Announcement (PA)
-Multi-hop advertisement constructed and forwarded only by MPRs. Each PA entry includes:
-- provider_id
-- provider_type (0 = MP, 1 = PH, 2 = RREH)
-- Current geographic position
-- Final geographic destination
-- Y Direction
-- X Direction
-- Number of Cars in plattoon
-- Total energy available (Energy of all cars in plattoon - energy needed for all of them to reach the final destination)
+### 5.2 JOIN_OFFER
+Sent by a Car in a platoon to a Prospective vehicle that might join, this is a reply for the HELLO. Fields include:
+- node ID
+- platoon ID
+- platoon total energy available
+- platoon total energy demand
+- number of vehicles in platoon
+- platoon_mobility_pattern
 
-PAs are forwarded with a Time-To-Live (TTL) limited to 4 hops.
+### 5.3 JOIN_ACCEPT
+Response from a vehicle to platoon node. Response to JOIN_OFFER . Includes:
+- node ID
+- platoon ID
+- Acceptance to Join the Platoon (True Flag)
 
-### 5.3 JOIN_OFFER
-Sent by a Consumer to a chosen Provider (MP, PH, or RREH). Fields include:
-- consumer_id
-- required_energy_kwh
-- current position and planned trajectory
-- preferred_meeting_point_id (for mobile providers and platoon heads)
+### 5.4 ACK
+- Response from the platoon to acknowledge the vehicle acceptance
+If joining vehicle didn't receive the ACK, retransmit after 500 ms
 
-### 5.4 JOIN_ACCEPT
-Response from a Provider to a Consumer. Includes:
-- provider_id
-- selected_meeting_point_id (for mobile providers and PHs)
-- expected_charging_bandwidth
-- expected_duration
-- list of EVs in the plattoon: EV_id, EV_energy_needed, EV_energy_available, EV_destination
-- platoon topology vector (ordered list of member IDs and their positions relative to the plattoon head)
+### 5.5 CHARGE_RQST
+Broadcast Message from a Vehicle in the Platoon to Request battery energy. Includes:
+- Node ID
+- Energy Demand
 
-### 5.5 ACK, NACK and ACKACK
-ACK is sent by the Consumer upon receiving JOIN_ACCEPT.
-NACK is sent by the Provider to refuse a JOIN_OFFER.
-ACKACK is sent by the Provider to confirm final commitment.
-After ACKACK both sides consider the session booked.
-
-### 5.6 PLATOON_BEACON
+### 5.6 CHARGE_RSP
 Broadcast by a Platoon Head. Contains:
-- platoon_id and head_id
-- timestamp
-- head position and velocity
-- available_slots
-- platoon topology vector (ordered list of member IDs and their positions relative to the plattoon head)
-- approximate route or segment sequence
+- vehicle provider ID
+- Energy Amount
+- Total Transfer time approx.
 
-### 5.7 PLATOON_STATUS
-Sent by platoon members to the head. Contains:
-- platoon_id
+### 5.7 CHARGE_SYN
+Sent by provider vehicle to the consumer vehicle to signal charging begin. Includes:
+- vehicle ID
+- "SYN"
+
+### 5.8 CHARGE_ACK
+Continuous ACKs by receiver to signal receiving energy
+- vehicle ID
+- "ACK"
+
+### 5.9 CHARGE_FIN
+Sent by provider vehicle to the consumer vehicle to signal charging end. Includes:
+- vehicle ID
+- "FIN"
+
+### 5.10 PLATOON_STATUS
+Sent by platoon members to the head. Every 15 seconds. Contains:
 - vehicle_id
 - battery_level_percent
-- relative_platoon_index
-- local estimate of receive_rate
+- energy_availavle
 
-### 5.8 AIM (Area Infrastructure Message)
-Sent by an RREH to nearby vehicles with lower frequency than PA. Contains:
+### 5.11 AIM (Area Infrastructure Message)
+Sent by an RREH to nearby vehicles. Contains:
 - hub_id
 - current and forecasted renewable_fraction
 - available_power_kw
@@ -105,7 +105,7 @@ Sent by an RREH to nearby vehicles with lower frequency than PA. Contains:
 - queue_time_estimate_s
 - operational_state (normal, congested, limited, offline)
 
-### 5.9 PLATOON_ANNOUNCE
+### 5.12 PLATOON_ANNOUNCE
 Broadcast by a Platoon Head for inter-platoon discovery. Enables consumers to discover and compare multiple platoons. Contains:
 - platoon_id and head_id
 - current position (lat, lon)
