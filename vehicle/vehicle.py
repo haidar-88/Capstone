@@ -1,16 +1,18 @@
 import heapq
 import energy_manager
 from protocol import provider_table
+from protocol import message_handler
+from protocol import messages
 
 class Vehicle:
     """
-    Represents an autonomous vehicle / energy node.
+    Represents an autonomous vehicle / energy vehicle.
     Battery model uses REAL physical units only.
     """
 
     def __init__(
             self,
-            node_id,
+            vehicle_id,
             battery_capacity_kwh,          # Total battery capacity (kWh)
             initial_energy_kwh,            # Current energy (kWh)
             min_energy_kwh,                # Minimum allowed energy (kWh)
@@ -25,7 +27,7 @@ class Vehicle:
         ):
         
         # Identity
-        self.node_id = node_id
+        self.vehicle_id = vehicle_id
 
         self.battery = energy_manager.BatteryManager(
             battery_capacity_kwh,
@@ -50,8 +52,50 @@ class Vehicle:
         self.provider_table = provider_table.ProviderTable()  # provider_id -> info dict
         self.inbox = []  # received messages (simulation queue)
 
+        self.handler = message_handler.MessageHandler(self)
+
         # Connections
         self.connections_list = {}
+
+    def join_platoon(self, platoon):
+        if not self.platoon:
+            self.platoon = platoon
+            return True
+        return False
+    
+    def leave_platoon(self):
+        if self.platoon:
+            self.platoon = None
+            return True
+        return False
+
+    def receive_message(self, mssg):
+        self.inbox.append(mssg)
+        return True
+
+    def process_messages(self):
+        while True:
+            if self.inbox:
+                self.handler.handle(self.inbox.pop())
+    
+    def send_protocol_message(self, message_builder_func, *args, broadcast=True, target_id=None):
+        """
+        Generic method to call any message builder and send it.
+        *args: extra parameters required by the specific message builder
+        """
+        # 1. Call the function from messages.py
+        # We always pass 'self' first because your builders expect the sender vehicle
+        msg = message_builder_func(self, *args)
+
+        # 2. Direct the traffic via the Platoon
+        if not self.platoon:
+            print(f"Vehicle {self.node_id} has no platoon to send to!")
+            return
+
+        if broadcast:
+            self.platoon.broadcast(sender=self, message=msg)
+        elif target_id:
+            self.platoon.send_to(target_id, message=msg)
 
     def available_energy(self):
         return self.battery.available_energy()
@@ -73,30 +117,30 @@ class Vehicle:
     def position(self):
         return (self.latitude, self.longitude)
 
-    def add_connection(self, node, edge):
-        if node not in self.connections_list:
-            self.connections_list[node] = edge
+    def add_connection(self, vehicle, edge):
+        if vehicle not in self.connections_list:
+            self.connections_list[vehicle] = edge
         return True
 
-    def remove_connection(self, node):
-        if node in self.connections_list:
-            self.connections_list.remove(node)
+    def remove_connection(self, vehicle):
+        if vehicle in self.connections_list:
+            self.connections_list.remove(vehicle)
             return True
         return False
     
     def prepare_data_for_dijkstra(self):
-        # 1. Determine how many nodes we have
-        V = self.platoon.node_number + 1
+        # 1. Determine how many vehicles we have
+        V = self.platoon.vehicle_number + 1
         
         # 2. Create the empty 'adj' list structure
         adj = [[] for _ in range(V)]
         
         # 3. Fill 'adj' using your hashmaps
-        for node in self.platoon.nodes:
-            u = node.node_id
-            # Iterate through your dict {node: edge}
-            for neighbor_node, edge_obj in node.connections_list.items():
-                v = neighbor_node.node_id
+        for vehicle in self.platoon.vehicles:
+            u = vehicle.vehicle_id
+            # Iterate through your dict {vehicle: edge}
+            for neighbor_vehicle, edge_obj in vehicle.connections_list.items():
+                v = neighbor_vehicle.vehicle_id
                 w = edge_obj.edge_cost # Your AI-calculated energy/distance cost
                 
                 adj[u].append((v, w))
@@ -105,12 +149,12 @@ class Vehicle:
 
     def dijkstra(self):
 
-        src = self.node_id
+        src = self.vehicle_id
         adj = self.prepare_data_for_dijkstra()
 
         V = len(adj)
 
-        # Min-heap (priority queue) storing pairs of (distance, node)
+        # Min-heap (priority queue) storing pairs of (distance, vehicle)
         pq = []
 
         path_to = [-1] * (V + 1)
@@ -142,17 +186,16 @@ class Vehicle:
         return dist, path_to
     
     def __str__(self):
-        temp = {x.node_id : y.edge_cost for x,y in self.connections_list.items()}
+        temp = {x.vehicle_id : y.edge_cost for x,y in self.connections_list.items()}
         return (
-            f"Node Status:\n"
+            f"vehicle Status:\n"
             f"-----------\n"
-            f"Node ID              : {self.node_id}\n"
+            f"vehicle ID              : {self.vehicle_id}\n"
             f"Energy               : {self.battery.energy_kwh:.3f} / {self.battery.capacity_kwh:.3f} kWh\n"
             f"Minimum energy       : {self.battery.min_energy_kwh:.3f} kWh\n"
             f"Battery health       : {self.battery.battery_health:.2f}\n"
             f"Max charge rate      : {self.battery.max_transfer_rate_in:.1f} kW\n"
             f"Max discharge rate   : {self.battery.max_transfer_rate_out:.1f} kW\n"
-            f"Battery Health       : {self.battery_health:.1f}\n"
             f"Position (lat, lon)  : ({self.latitude:.5f}, {self.longitude:.5f})\n"
             f"Velocity             : {self.velocity:.2f} m/s\n"
             f"Platoon              : {self.platoon.platoon_id}\n"

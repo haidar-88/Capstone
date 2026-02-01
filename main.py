@@ -1,4 +1,5 @@
-from vehicle import vehicle, platoon, edge
+from network import platoon
+from vehicle import vehicle, edge
 
 from AI.Smart_Decision import pick_a_charger
 
@@ -17,7 +18,7 @@ car6 = vehicle.vehicle(6, 150, 400, 55, 90, 110, 3333, 4444, 3, None, False, 0.7
 cars = [car1, car2, car3, car4, car5, car6]
 for car in cars:
     platoon1.add_vehicle(car)
-    car.platoon = platoon1
+    car.join_platoon(platoon1)
 
 # Create edges with different costs
 # Car1 connections

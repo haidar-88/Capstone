@@ -7,7 +7,7 @@
 def HELLO_message(vehicle):
     return {
         "type": "HELLO",
-        "node_id": vehicle.node_id,
+        "vehicle_id": vehicle.vehicle_id,
         "energy_available": vehicle.available_energy(),
         "position": vehicle.position(),  # (lat, lon)
         "max_transfer_rate_in": vehicle.battery.max_transfer_rate_in,
@@ -21,12 +21,12 @@ def JOIN_OFFER_message(sender_vehicle, target_vehicle_id):
 
     return {
         "type": "JOIN_OFFER",
-        "node_id": sender_vehicle.node_id,
+        "vehicle_id": sender_vehicle.vehicle_id,
         "target_vehicle_id": target_vehicle_id,
         "platoon_id": platoon.platoon_id,
         "platoon_total_energy_available": platoon.total_energy_available(),
         "platoon_total_energy_demand": platoon.total_energy_demand(),
-        "platoon_size": len(platoon.nodes),
+        "platoon_size": len(platoon.vehicles),
         "platoon_mobility_pattern": platoon.mobility_pattern()
     }
 
@@ -35,7 +35,7 @@ def JOIN_OFFER_message(sender_vehicle, target_vehicle_id):
 def JOIN_ACCEPT_message(vehicle, platoon_id):
     return {
         "type": "JOIN_ACCEPT",
-        "node_id": vehicle.node_id,
+        "vehicle_id": vehicle.vehicle_id,
         "platoon_id": platoon_id,
         "accept": True
     }
@@ -54,7 +54,7 @@ def ACK_message(platoon_id, vehicle_id):
 def CHARGE_RQST_message(vehicle, energy_demand_kwh):
     return {
         "type": "CHARGE_RQST",
-        "node_id": vehicle.node_id,
+        "vehicle_id": vehicle.vehicle_id,
         "energy_demand_kwh": energy_demand_kwh
     }
 
@@ -63,7 +63,7 @@ def CHARGE_RQST_message(vehicle, energy_demand_kwh):
 def CHARGE_RSP_message(provider_vehicle, energy_amount_kwh, transfer_time_s):
     return {
         "type": "CHARGE_RSP",
-        "provider_vehicle_id": provider_vehicle.node_id,
+        "provider_vehicle_id": provider_vehicle.vehicle_id,
         "energy_amount_kwh": energy_amount_kwh,
         "estimated_transfer_time_s": transfer_time_s
     }
@@ -73,7 +73,7 @@ def CHARGE_RSP_message(provider_vehicle, energy_amount_kwh, transfer_time_s):
 def CHARGE_SYN_message(vehicle):
     return {
         "type": "CHARGE_SYN",
-        "vehicle_id": vehicle.node_id,
+        "vehicle_id": vehicle.vehicle_id,
         "flag": "SYN"
     }
 
@@ -82,7 +82,7 @@ def CHARGE_SYN_message(vehicle):
 def CHARGE_ACK_message(vehicle):
     return {
         "type": "CHARGE_ACK",
-        "vehicle_id": vehicle.node_id,
+        "vehicle_id": vehicle.vehicle_id,
         "flag": "ACK"
     }
 
@@ -91,7 +91,7 @@ def CHARGE_ACK_message(vehicle):
 def CHARGE_FIN_message(vehicle):
     return {
         "type": "CHARGE_FIN",
-        "vehicle_id": vehicle.node_id,
+        "vehicle_id": vehicle.vehicle_id,
         "flag": "FIN"
     }
 
@@ -100,7 +100,7 @@ def CHARGE_FIN_message(vehicle):
 def PLATOON_STATUS_message(vehicle):
     return {
         "type": "PLATOON_STATUS",
-        "vehicle_id": vehicle.node_id,
+        "vehicle_id": vehicle.vehicle_id,
         "battery_level_percent": (vehicle.battery.energy_kwh / vehicle.battery.capacity_kwh) * 100,
         "energy_available_kwh": vehicle.available_energy()
     }
@@ -110,7 +110,7 @@ def PLATOON_STATUS_message(vehicle):
 """def AIM_message(hub):
     return {
         "type": "AIM",
-        "hub_id": hub.node_id,
+        "hub_id": hub.vehicle_id,
         "renewable_fraction_current": hub.current_renewable_fraction(),
         "renewable_fraction_forecast": hub.forecasted_renewable_fraction(),
         "available_power_kw": hub.available_power_kw(),
