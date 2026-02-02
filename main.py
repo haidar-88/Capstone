@@ -1,95 +1,67 @@
-from network import platoon
-from vehicle import vehicle, edge
+import time
+from vehicle.vehicle import Vehicle
+from network.platoon import Platoon
+from network.inter_discovery import Network
 
-from AI.Smart_Decision import pick_a_charger
+def run_simulation(duration_seconds=30):
+    # 1. Setup the Wireless Network (10m discovery range)
+    airwaves = Network(discovery_range_m=10.0)
 
-# Create platoon
-platoon1 = platoon.Platoon(1001)
+    # 2. Create a Platoon
+    highway_platoon = Platoon(id="PLT_Alpha")
 
-# Create 6 cars with different data
-car1 = vehicle.vehicle(1, 200, 200, 60, 100, 90, 1234, 5678, 5, None, True, 1)
-car2 = vehicle.vehicle(2, 400, 130, 70, 150, 110, 3433, 3434, 2, None, False, 0.8)
-car3 = vehicle.vehicle(3, 100, 150, 50, 60, 50, 7473, 2737, 3, None, False, 0.2)
-car4 = vehicle.vehicle(4, 350, 300, 80, 120, 130, 8888, 9999, 4, None, False, 0.6)
-car5 = vehicle.vehicle(5, 500, 250, 65, 180, 75, 1111, 2222, 1, None, False, 0.9)
-car6 = vehicle.vehicle(6, 150, 400, 55, 90, 110, 3333, 4444, 3, None, False, 0.7)
+    # 3. Initialize Vehicles
+    # Car A: Stationary Leader
+    leader = Vehicle(
+        vehicle_id="Leader_1", 
+        battery_capacity_kwh=100, initial_energy_kwh=80, min_energy_kwh=10,
+        latitude=33.8938, longitude=35.5018, heading=90, velocity=0,
+        is_leader=True, platoon=highway_platoon
+    )
+    
+    # Car B: Moving toward the leader to join
+    traveler = Vehicle(
+        vehicle_id="Traveler_1", 
+        battery_capacity_kwh=75, initial_energy_kwh=15, min_energy_kwh=5,
+        latitude=33.8937, longitude=35.5016, heading=90, velocity=2.0 # Moving slowly East
+    )
 
-# Add all cars to platoon
-cars = [car1, car2, car3, car4, car5, car6]
-for car in cars:
-    platoon1.add_vehicle(car)
-    car.join_platoon(platoon1)
+    # Register in the simulation
+    highway_platoon.add_vehicle(leader)
+    airwaves.register_vehicle(leader)
+    airwaves.register_vehicle(traveler)
 
-# Create edges with different costs
-# Car1 connections
-connection1_2 = edge.Edge(car1, car2, 15)
-connection2_1 = edge.Edge(car2, car1, 12)
-connection1_3 = edge.Edge(car1, car3, 8)
-connection3_1 = edge.Edge(car3, car1, 10)
+    print(f"--- Simulation Starting: {duration_seconds}s ---")
 
-# Car2 connections
-connection2_4 = edge.Edge(car2, car4, 20)
-connection4_2 = edge.Edge(car4, car2, 18)
-connection2_5 = edge.Edge(car2, car5, 25)
-connection5_2 = edge.Edge(car5, car2, 22)
+    # 4. Main Loop
+    for t in range(duration_seconds):
+        print(f"\n[TIME: {t}s]")
 
-# Car3 connections
-connection3_6 = edge.Edge(car3, car6, 30)
-connection6_3 = edge.Edge(car6, car3, 28)
+        # A. Movement & Physics
+        for v in airwaves.all_vehicles:
+            v.tick(time_step_s=1) # Updates GPS and drains energy
+        
+        # B. Automated Proximity Discovery
+        # If cars get within 10m, Network will force a HELLO exchange
+        airwaves.scan_for_neighbors()
 
-# Car4 connections
-connection4_5 = edge.Edge(car4, car5, 7)
-connection5_4 = edge.Edge(car5, car4, 7)
+        # C. Process Communication
+        for v in airwaves.all_vehicles:
+            v.process_messages()
 
-# Car5 connections
-connection5_6 = edge.Edge(car5, car6, 14)
-connection6_5 = edge.Edge(car6, car5, 14)
+        # D. Logic Checks (AI Behavior)
+        # If Traveler is low on energy and has discovered a provider, request charge
+        if traveler.battery.energy_kwh < 20:
+            best_p = traveler.provider_table.get_best_provider()
+            if best_p:
+                print(f"Traveler_1: Low energy! Found provider {best_p}. Requesting energy...")
+                # Logic to trigger protocol 5.5 CHARGE_RQST would go here
 
-# Car6 connections
-connection6_1 = edge.Edge(car6, car1, 35)
-connection1_6 = edge.Edge(car1, car6, 32)
+        # E. Reporting
+        print(leader)
+        print(traveler)
+        
+        time.sleep(0.1) # Speed up simulation for real-time viewing
 
-# Add all connections to cars
-# Car1
-car1.add_connection(car2, connection1_2)
-car1.add_connection(car3, connection1_3)
-car1.add_connection(car6, connection1_6)
-
-# Car2
-car2.add_connection(car1, connection2_1)
-car2.add_connection(car4, connection2_4)
-car2.add_connection(car5, connection2_5)
-
-# Car3
-car3.add_connection(car1, connection3_1)
-car3.add_connection(car6, connection3_6)
-
-# Car4
-car4.add_connection(car2, connection4_2)
-car4.add_connection(car5, connection4_5)
-
-# Car5
-car5.add_connection(car2, connection5_2)
-car5.add_connection(car4, connection5_4)
-car5.add_connection(car6, connection5_6)
-
-# Car6
-car6.add_connection(car3, connection6_3)
-car6.add_connection(car5, connection6_5)
-car6.add_connection(car1, connection6_1)
-
-# Print all cars
-for i, car in enumerate(cars, 1):
-    print(f"=== Car {i} ===")
-    print(car)
-    print()
-
-print(end="\n\n")
-
-# Print platoon summary
-print("=== Platoon Summary ===")
-print(platoon1)
-
-print("--------------------------------------", end="\n\n")
-#choosen_charger = pick_a_charger(car2, platoon1, 100)
-#print(choosen_charger)
+if __name__ == "__main__":
+    run_simulation()

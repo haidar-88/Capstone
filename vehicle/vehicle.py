@@ -3,6 +3,7 @@ import energy_manager
 from protocol import provider_table
 from protocol import message_handler
 from protocol import messages
+from gps import GPS
 
 class Vehicle:
     """
@@ -20,6 +21,7 @@ class Vehicle:
             max_transfer_rate_out=50.0,    # Max discharge power (kW)
             latitude=0.0,
             longitude=0.0,
+            heading=0.0,                   # 0-360 degrees, represents the direction the car is going in
             velocity=0.0,                  # m/s
             platoon=None,
             is_leader=False,
@@ -38,10 +40,8 @@ class Vehicle:
             battery_health
         )
 
-
         # GPS & motion
-        self.latitude = latitude
-        self.longitude = longitude
+        self.gps = GPS(latitude, longitude, heading)
         self.velocity = velocity
 
         # Platoon info
@@ -56,6 +56,34 @@ class Vehicle:
 
         # Connections
         self.connections_list = {}
+    
+    def start_threads(self): #method to start all threads for a car
+        return
+    
+    def tick(self, time_step_s=1):
+        """
+        Called every simulation loop. Updates physics (movement) and battery.
+        """
+        while True:
+            # 1. Update Position
+            self.gps.update_position(self.velocity, time_step_s)
+            
+            # 2. Drain battery due to driving (Simplified physics: 0.2 kWh per km roughly)
+            # Power (kW) required to maintain velocity. 
+            # Very rough estimate: P = 15kW constant for city driving
+            driving_load_kw = 15.0 if self.velocity > 0 else 0.1 # 0.1 idle drain
+            self.drain_power(driving_load_kw, duration_s=time_step_s)
+
+    def position(self):
+        """Returns (lat, lon) from the GPS module"""
+        return self.gps.get_position()
+    
+    def distance_to(self, other_vehicle_pos):
+        """
+        Calculates distance in meters to another vehicle's position tuple (lat, lon)
+        """
+        target_lat, target_lon = other_vehicle_pos
+        return self.gps.get_distance_to(target_lat, target_lon)
 
     def join_platoon(self, platoon):
         if not self.platoon:

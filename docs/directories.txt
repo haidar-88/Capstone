@@ -4,16 +4,16 @@ Project/
 │
 ├── vehicle/
 │   ├── vehicle.py         # Main Vehicle class (node)
+│   ├── edge.py
 │   ├── energy_manager.py  # Handles battery logic
 │
 ├── protocol/
 │   ├── messages.py        # Message creation (PA, JOIN_OFFER…)
-│   ├── handler.py         # How messages are processed
+│   ├── message_handler.py         # How messages are processed
 │   ├── provider_table.py  # Stores discovered providers
 │
 ├── network/
-│   ├── network.py         # Simulated message passing
-│   ├── forwarding.py      # Multi-hop + TTL logic (later)
+│   ├── platoon.py         # network of cars
 │
 └── AI/
     ├── smart_decision.py       # AI for decision
