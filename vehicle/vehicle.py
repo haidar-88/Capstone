@@ -1,10 +1,10 @@
 import heapq
-import energy_manager
+from vehicle import energy_manager
 from protocol import provider_table
 from protocol import message_handler
-from protocol import messages
-from gps import GPS
+from vehicle import gps
 import threading
+import time
 
 class Vehicle:
     """
@@ -42,7 +42,7 @@ class Vehicle:
         )
 
         # GPS & motion
-        self.gps = GPS(latitude, longitude, heading)
+        self.gps = gps.GPS(latitude, longitude, heading)
         self.velocity = velocity
 
         # Platoon info
@@ -78,6 +78,13 @@ class Vehicle:
             # Very rough estimate: P = 15kW constant for city driving
             driving_load_kw = 15.0 if self.velocity > 0 else 0.1 # 0.1 idle drain
             self.drain_power(driving_load_kw, duration_s=time_step_s)
+            time.sleep(1)
+    
+    def evaluate_platoon_offer(self, msg):
+        # If I am not in a platoon, I accept.
+        if self.platoon is None:
+            return True
+        return False
 
     def position(self):
         """Returns (lat, lon) from the GPS module"""
@@ -90,11 +97,11 @@ class Vehicle:
         target_lat, target_lon = other_vehicle_pos
         return self.gps.get_distance_to(target_lat, target_lon)
     
-    def unicast(vehicle, response):
+    def unicast(self, vehicle, response):
         vehicle.receive_message(response)
     
     def is_in_platoon(self):
-        return self.platoon != None
+        return self.platoon is not None
 
     def join_platoon(self, platoon):
         if not self.platoon:
@@ -116,6 +123,7 @@ class Vehicle:
         while True:
             if self.inbox:
                 self.handler.handle(self.inbox.pop())
+            time.sleep(0.1)
     
     def send_protocol_message(self, message_builder_func, *args, broadcast=True, target_id=None):
         """
@@ -152,9 +160,6 @@ class Vehicle:
     def request_power(self, power):
         self.platoon.update_total_energy_demand(power)
         return True
-
-    def position(self):
-        return (self.latitude, self.longitude)
 
     def add_connection(self, vehicle, edge):
         if vehicle not in self.connections_list:
@@ -235,7 +240,7 @@ class Vehicle:
             f"Battery health       : {self.battery.battery_health:.2f}\n"
             f"Max charge rate      : {self.battery.max_transfer_rate_in:.1f} kW\n"
             f"Max discharge rate   : {self.battery.max_transfer_rate_out:.1f} kW\n"
-            f"Position (lat, lon)  : ({self.latitude:.5f}, {self.longitude:.5f})\n"
+            f"Position (lat, lon)  : ({self.gps.get_position()})\n"
             f"Velocity             : {self.velocity:.2f} m/s\n"
             f"Platoon              : {self.platoon.platoon_id}\n"
             f"Leader               : {self.is_leader}\n"

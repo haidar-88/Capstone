@@ -1,5 +1,3 @@
-from network import network
-
 class Platoon:
     """
     Represents a Platoon of vehicles
@@ -14,14 +12,18 @@ class Platoon:
         self.available_charger_power = 0
         self.platoon_mobility_pattern = self.calculate_mobility_pattern() #(Expected length of time the platoon stays together)
 
-        self.network = network.Network()
-
     def broadcast(self, sender, message):
         for vehicle in self.vehicles:
             if vehicle.vehicle_id != sender.vehicle_id:
                 vehicle.receive_message(message)
 
-    def calculate_mobility_pattern():
+    def unicast(self, target_id, message):
+        for vehicle in self.vehicles:
+            if vehicle.vehicle_id == target_id:
+                vehicle.receive_message(message)
+                return
+
+    def calculate_mobility_pattern(self):
         return 0
 
     def can_add_vehicle(self):
@@ -33,6 +35,7 @@ class Platoon:
             return False
         self.vehicle_number = self.vehicle_number + 1
         self.vehicles.append(vehicle)
+        vehicle.platoon = self
         self.update_available_charger_power(vehicle.available_energy())
         return True
 
@@ -40,9 +43,16 @@ class Platoon:
         if not vehicle in self.vehicles:
             return False
         self.vehicle_number = self.vehicle_number - 1
-        self.vehicles.pop(vehicle)
+        self.vehicles.remove(vehicle)
         self.update_available_charger_power(vehicle.available_energy())
         return True
+    
+    def find_provider(self, demand):
+        # Basic logic: find first vehicle with enough energy that isn't the leader
+        for v in self.vehicles:
+            if v.available_energy() > demand:
+                return v
+        return None
     
     def update_available_charger_power(self, power):
         self.available_charger_power = self.available_charger_power + power
@@ -51,6 +61,15 @@ class Platoon:
     def update_total_energy_demand(self, request):
         self.total_energy_demand = self.total_energy_demand + request
         return True
+    
+    def total_energy_available(self):
+        return sum(v.available_energy() for v in self.vehicles)
+    
+    def get_total_energy_demand(self):
+        return self.total_energy_demand
+    
+    def mobility_pattern(self):
+        return self.platoon_mobility_pattern
     
     def __str__(self):
         vehicle_ids = [getattr(vehicle, "vehicle_id", "N/A") for vehicle in self.vehicles]

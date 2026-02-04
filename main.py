@@ -1,67 +1,86 @@
 import time
+import os
 from vehicle.vehicle import Vehicle
 from network.platoon import Platoon
 from network.inter_discovery import Network
 
-def run_simulation(duration_seconds=30):
-    # 1. Setup the Wireless Network (10m discovery range)
-    airwaves = Network(discovery_range_m=10.0)
+def main():
+    # 1. Setup the Network (Range set to 100m)
+    net = Network(discovery_range_m=100.0)
+    net.start_threads()
 
-    # 2. Create a Platoon
-    highway_platoon = Platoon(id="PLT_Alpha")
+    # 2. Setup the Platoon object
+    p1 = Platoon("NYC_PLATOON_01")
 
-    # 3. Initialize Vehicles
-    # Car A: Stationary Leader
-    leader = Vehicle(
-        vehicle_id="Leader_1", 
-        battery_capacity_kwh=100, initial_energy_kwh=80, min_energy_kwh=10,
-        latitude=33.8938, longitude=35.5018, heading=90, velocity=0,
-        is_leader=True, platoon=highway_platoon
-    )
+    # 3. Create 6 Vehicles using your exact __init__ signature
+    vehicles = []
+    base_lat = 40.0
+    base_lon = -74.0
+
+    print("--- Initializing 6 Vehicles ---")
+    for i in range(6):
+        is_leader = (i == 0)
+        
+        # Exact arguments from your Vehicle class
+        v = Vehicle(
+            vehicle_id=f"CAR_{i:02d}",
+            battery_capacity_kwh=80.0,
+            initial_energy_kwh=70.0 if is_leader else 30.0,
+            min_energy_kwh=10.0,
+            max_transfer_rate_in=50.0,
+            max_transfer_rate_out=50.0,
+            latitude=base_lat + (i * 0.0001), # Keeps them within 10-20 meters
+            longitude=base_lon,
+            heading=0.0,
+            velocity=10.0, # m/s
+            platoon=None,
+            is_leader=is_leader,
+            battery_health=1.0
+        )
+        
+        # Hook up the network
+        v.network = net
+        net.register_vehicle(v)
+        
+        # Set the first car as the platoon leader so the others have someone to join
+        if is_leader:
+            p1.add_vehicle(v)
+            v.is_platoon_leader = True 
+        
+        # Fire up the vehicle's internal threads (tick/process_messages)
+        v.start_threads()
+        vehicles.append(v)
+
+    print("Simulation Running... (Press Ctrl+C to stop)")
     
-    # Car B: Moving toward the leader to join
-    traveler = Vehicle(
-        vehicle_id="Traveler_1", 
-        battery_capacity_kwh=75, initial_energy_kwh=15, min_energy_kwh=5,
-        latitude=33.8937, longitude=35.5016, heading=90, velocity=2.0 # Moving slowly East
-    )
+    # 4. Simulation Loop
+    try:
+        while True:
+            # Clear screen for a clean dashboard view
+            #os.system('cls' if os.name == 'nt' else 'clear')
+            
+            print(f"=== PLATOON: {p1.platoon_id} ===")
+            print(f"Members Joined: {p1.vehicle_number}/{p1.max_vehicles}")
+            print("-" * 60)
+            
+            # Show stats for all 6 cars
+            for v in vehicles:
+                # Check platoon status
+                p_status = "LEADER" if v.is_leader else ("MEMBER" if v.platoon else "SCANNING")
+                
+                # Simple math for battery display
+                energy_val = v.battery.energy_kwh
+                
+                print(f"[{v.vehicle_id}] | {p_status:8} | Bat: {energy_val:.2f} kWh | Pos: ({v.gps.latitude:.5f})")
 
-    # Register in the simulation
-    highway_platoon.add_vehicle(leader)
-    airwaves.register_vehicle(leader)
-    airwaves.register_vehicle(traveler)
+            # The Network thread will automatically call exchange_hello() 
+            # because the cars are close. Your MessageHandler will take it from there.
 
-    print(f"--- Simulation Starting: {duration_seconds}s ---")
+            time.sleep(1)
 
-    # 4. Main Loop
-    for t in range(duration_seconds):
-        print(f"\n[TIME: {t}s]")
-
-        # A. Movement & Physics
-        for v in airwaves.all_vehicles:
-            v.tick(time_step_s=1) # Updates GPS and drains energy
-        
-        # B. Automated Proximity Discovery
-        # If cars get within 10m, Network will force a HELLO exchange
-        airwaves.scan_for_neighbors()
-
-        # C. Process Communication
-        for v in airwaves.all_vehicles:
-            v.process_messages()
-
-        # D. Logic Checks (AI Behavior)
-        # If Traveler is low on energy and has discovered a provider, request charge
-        if traveler.battery.energy_kwh < 20:
-            best_p = traveler.provider_table.get_best_provider()
-            if best_p:
-                print(f"Traveler_1: Low energy! Found provider {best_p}. Requesting energy...")
-                # Logic to trigger protocol 5.5 CHARGE_RQST would go here
-
-        # E. Reporting
-        print(leader)
-        print(traveler)
-        
-        time.sleep(0.1) # Speed up simulation for real-time viewing
+    except KeyboardInterrupt:
+        print("\nSimulation Terminated.")
+        return
 
 if __name__ == "__main__":
-    run_simulation()
+    main()

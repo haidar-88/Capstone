@@ -1,4 +1,4 @@
-from vehicle import gps
+import time
 from protocol import messages
 import threading
 
@@ -6,6 +6,7 @@ class Network:
     def __init__(self, discovery_range_m=10.0):
         self.all_vehicles = []
         self.discovery_range_m = discovery_range_m
+        print(self.discovery_range_m)
 
     def start_threads(self):
         t1 = threading.Thread(target=self.scan_for_neighbors, args=())
@@ -23,14 +24,17 @@ class Network:
         """
 
         while True:
-            for i, v1 in enumerate(self.all_vehicles):
-                for v2 in self.all_vehicles[i+1:]:
+            print("scanning near cars.....")
+            for v1 in self.all_vehicles:
+                for v2 in self.all_vehicles:
+                    if v1 == v2:
+                        continue
                     # Calculate distance using the GPS module
                     dist = v1.distance_to(v2.position())
-                    
                     if (not v1.is_in_platoon() and v2.is_in_platoon()) and (dist <= self.discovery_range_m):
                         # Trigger automatic HELLO exchange
                         self.exchange_hello(v1, v2)
+            time.sleep(2)
 
     def exchange_hello(self, v1, v2):
         """Simulates the wireless handshake when cars get close"""

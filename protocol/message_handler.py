@@ -1,4 +1,4 @@
-import messages
+from protocol import messages
 
 class MessageHandler:
     def __init__(self, vehicle):
@@ -53,7 +53,7 @@ class MessageHandler:
         sender_id = msg["vehicle_id"]
         
         # Only the Platoon Head (or designated recruiter) usually responds
-        if self.vehicle.is_platoon_leader and self.vehicle.platoon.can_accept_members():
+        if self.vehicle.is_platoon_leader and self.vehicle.platoon.can_add_vehicle():
             
             # Construct the offer using your builder function
             response = messages.JOIN_OFFER_message(self.vehicle, sender_id)
@@ -84,23 +84,22 @@ class MessageHandler:
         """
         new_member_id = msg["vehicle_id"]
         platoon_id = msg["platoon_id"]
+        new_member = msg["vehicle"]
 
         if msg["accept"]:
             # Logic to add the member to the local platoon structure
-            self.vehicle.platoon.add_member(new_member_id)
+            self.vehicle.platoon.add_vehicle(new_member)
             
             # Send 5.4 ACK
             response = messages.ACK_message(platoon_id, new_member_id)
-            self.vehicle.unicast(msg["vehicle"], response)
+            self.vehicle.unicast(new_member, response)
             print(f"[{self.vehicle.vehicle_id}] Sent ACK to new member {new_member_id}")
 
     def handle_ack(self, msg):
         """
         5.4 ACK: Received by the Joining Vehicle.
-        Action: Finalize state change from 'Independent' to 'Platoon Member'.
         """
         if msg["vehicle_id"] == self.vehicle.vehicle_id:
-            self.vehicle.set_state("PLATOON_MEMBER")
             self.vehicle.platoon_id = msg["platoon_id"]
             print(f"[{self.vehicle.vehicle_id}] Joined Platoon {msg['platoon_id']} successfully.")
 
@@ -142,23 +141,17 @@ class MessageHandler:
             self.vehicle.network.broadcast(syn_msg) 
             print(f"[{self.vehicle.vehicle_id}] Selected as provider. Sending SYN.")
 
-        # If I am the Consumer (we need to track if we requested charge)
-        elif self.vehicle.state == "REQUESTING_CHARGE":
-            print(f"[{self.vehicle.vehicle_id}] Matched with provider {provider_id}. Waiting for SYN.")
-
     def handle_charge_syn(self, msg):
         """
         5.7 CHARGE_SYN: Received by Consumer.
         Action: Start physical charging simulation and send ACK.
         """
-        # Check if this SYN is from my assigned provider
-        if self.vehicle.state == "REQUESTING_CHARGE": 
-            # Send 5.8 CHARGE_ACK
-            ack_msg = messages.CHARGE_ACK_message(self.vehicle)
-            self.vehicle.platoon.unicast(msg["vehicle_id"], ack_msg)
-            
-            self.vehicle.start_charging_process(msg["vehicle_id"])
-            print(f"[{self.vehicle.vehicle_id}] SYN received. Sending ACK and starting charge.")
+        # Send 5.8 CHARGE_ACK
+        ack_msg = messages.CHARGE_ACK_message(self.vehicle)
+        self.vehicle.platoon.unicast(msg["vehicle_id"], ack_msg)
+        
+        self.vehicle.start_charging_process(msg["vehicle_id"])
+        print(f"[{self.vehicle.vehicle_id}] SYN received. Sending ACK and starting charge.")
 
     def handle_charge_ack(self, msg):
         """

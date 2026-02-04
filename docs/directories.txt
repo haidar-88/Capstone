@@ -6,6 +6,7 @@ Project/
 │   ├── vehicle.py         # Main Vehicle class (node)
 │   ├── edge.py
 │   ├── energy_manager.py  # Handles battery logic
+│   ├── gps.py             # Handles gps logic
 │
 ├── protocol/
 │   ├── messages.py        # Message creation (PA, JOIN_OFFER…)
@@ -14,6 +15,7 @@ Project/
 │
 ├── network/
 │   ├── platoon.py         # network of cars
+│   ├── inter_discovery.py         # network of cars
 │
 └── AI/
     ├── smart_decision.py       # AI for decision

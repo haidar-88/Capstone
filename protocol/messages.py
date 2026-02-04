@@ -27,7 +27,7 @@ def JOIN_OFFER_message(sender_vehicle, target_vehicle_id):
         "target_vehicle_id": target_vehicle_id,
         "platoon_id": platoon.platoon_id,
         "platoon_total_energy_available": platoon.total_energy_available(),
-        "platoon_total_energy_demand": platoon.total_energy_demand(),
+        "platoon_total_energy_demand": platoon.get_total_energy_demand(),
         "platoon_size": len(platoon.vehicles),
         "platoon_mobility_pattern": platoon.mobility_pattern()
     }
