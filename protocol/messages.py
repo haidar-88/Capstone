@@ -8,6 +8,7 @@ def HELLO_message(vehicle):
     return {
         "type": "HELLO",
         "vehicle_id": vehicle.vehicle_id,
+        "vehicle": vehicle,
         "energy_available": vehicle.available_energy(),
         "position": vehicle.position(),  # (lat, lon)
         "max_transfer_rate_in": vehicle.battery.max_transfer_rate_in,
@@ -22,6 +23,7 @@ def JOIN_OFFER_message(sender_vehicle, target_vehicle_id):
     return {
         "type": "JOIN_OFFER",
         "vehicle_id": sender_vehicle.vehicle_id,
+        "vehicle": sender_vehicle,
         "target_vehicle_id": target_vehicle_id,
         "platoon_id": platoon.platoon_id,
         "platoon_total_energy_available": platoon.total_energy_available(),
@@ -37,6 +39,7 @@ def JOIN_ACCEPT_message(vehicle, platoon_id):
         "type": "JOIN_ACCEPT",
         "vehicle_id": vehicle.vehicle_id,
         "platoon_id": platoon_id,
+        "vehicle": vehicle,
         "accept": True
     }
 

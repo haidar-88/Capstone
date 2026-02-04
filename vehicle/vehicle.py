@@ -4,6 +4,7 @@ from protocol import provider_table
 from protocol import message_handler
 from protocol import messages
 from gps import GPS
+import threading
 
 class Vehicle:
     """
@@ -58,7 +59,11 @@ class Vehicle:
         self.connections_list = {}
     
     def start_threads(self): #method to start all threads for a car
-        return
+        t1 = threading.Thread(target=self.tick, args=())
+        t2 = threading.Thread(target=self.process_messages, args=())
+        t1.start()
+        t2.start()
+        return True
     
     def tick(self, time_step_s=1):
         """
@@ -84,6 +89,12 @@ class Vehicle:
         """
         target_lat, target_lon = other_vehicle_pos
         return self.gps.get_distance_to(target_lat, target_lon)
+    
+    def unicast(vehicle, response):
+        vehicle.receive_message(response)
+    
+    def is_in_platoon(self):
+        return self.platoon != None
 
     def join_platoon(self, platoon):
         if not self.platoon:

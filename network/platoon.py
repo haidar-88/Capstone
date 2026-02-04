@@ -21,12 +21,6 @@ class Platoon:
             if vehicle.vehicle_id != sender.vehicle_id:
                 vehicle.receive_message(message)
 
-    def send_to(self, target_id, message):
-        for vehicle in self.vehicles:
-            if vehicle.vehicle_id == target_id:
-                vehicle.receive_message(message)
-                break
-
     def calculate_mobility_pattern():
         return 0
 
