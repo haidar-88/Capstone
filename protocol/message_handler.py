@@ -33,7 +33,7 @@ class MessageHandler:
             self.handle_charge_fin(message)
 
         # --- Status & Infrastructure ---
-        elif msg_type == "PLATOON_STATUS":
+        elif msg_type == "STATUS":
             self.handle_platoon_status(message)
         elif msg_type == "AIM":
             self.handle_aim(message)

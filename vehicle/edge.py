@@ -1,16 +1,26 @@
+import threading
+import time
+
 class Edge:
     """
     Represents a connection between two Nodes with dynamic energy transfer.
     """
 
-    def __init__(self, source, destination, distance):
+    def __init__(self, source, destination):
         self.source = source
         self.destination = destination
-        self.distance = distance  # meters/kilometers, metadata only
+        self.distance = 0  # meters, metadata only
         self.transfer_efficiency = self.calculate_transfer_efficiency()
         self.energy_loss = 0.0  # kWh lost in last transfer
         self.expected_transfer_time = 0.0  # seconds, updated dynamically
         self.edge_cost = self.calculate_cost()
+        t1 = threading.Thread(target=self.calculate_transfer_efficiency, args=())
+        t1.start()
+
+    def calculate_distance(self):
+        while True:
+            self.distance = self.source.distance_to(self.destination)
+            time.sleep(1)
 
     def calculate_transfer_efficiency(self):
         """

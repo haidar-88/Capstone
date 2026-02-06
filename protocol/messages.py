@@ -100,12 +100,15 @@ def CHARGE_FIN_message(vehicle):
 
 
 # ---------- 5.10 PLATOON_STATUS ----------
-def PLATOON_STATUS_message(vehicle):
+def STATUS_message(vehicle):
     return {
-        "type": "PLATOON_STATUS",
+        "type": "STATUS",
         "vehicle_id": vehicle.vehicle_id,
-        "battery_level_percent": (vehicle.battery.energy_kwh / vehicle.battery.capacity_kwh) * 100,
-        "energy_available_kwh": vehicle.available_energy()
+        "energy_available_kwh": vehicle.available_energy(),
+        "battery_capacity": vehicle.battery_capacity(),
+        "min_energy_kwh": vehicle.min_energy(),
+        "battery_health": vehicle.battery_health(),
+        "connections": vehicle.get_connections_list
     }
 
 

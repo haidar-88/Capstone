@@ -19,7 +19,7 @@ class BatteryManager:
 
         self.max_transfer_rate_in = max_transfer_rate_in
         self.max_transfer_rate_out = max_transfer_rate_out
-        self.battery_health = battery_health
+        self.health = battery_health
 
     # -------------------------
     # STATE QUERIES
@@ -28,8 +28,17 @@ class BatteryManager:
     def available_energy(self):
         return self.energy_kwh
 
+    def battery_capacity(self):
+        return self.capacity_kwh
+    
+    def min_energy(self):
+        return self.min_energy_kwh
+    
+    def battery_health(self):
+        return self.health
+
     def can_transfer(self, power_kw, duration_s=1):
-        if self.battery_health <= 0.4:
+        if self.health <= 0.4:
             return False
 
         power_kw = min(power_kw, self.max_transfer_rate_out)

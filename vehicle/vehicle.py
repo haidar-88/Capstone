@@ -1,6 +1,7 @@
 import heapq
 from vehicle import energy_manager
-from protocol import provider_table
+from protocol import info_table
+from protocol.messages import STATUS_message
 from protocol import message_handler
 from vehicle import gps
 import threading
@@ -50,7 +51,9 @@ class Vehicle:
         self.is_leader = is_leader
 
         # --- MVCCP COMMUNICATION STATE ---
-        self.provider_table = provider_table.ProviderTable()  # provider_id -> info dict
+        if self.is_leader:
+            self.info_table = info_table.InformationTable()  # provider_id -> info dict
+            self.status_inbox = []
         self.inbox = []  # received messages (simulation queue)
 
         self.handler = message_handler.MessageHandler(self)
@@ -61,8 +64,10 @@ class Vehicle:
     def start_threads(self): #method to start all threads for a car
         t1 = threading.Thread(target=self.tick, args=())
         t2 = threading.Thread(target=self.process_messages, args=())
+        t3 = threading.Thread(target=self.status_update_message, args=())
         t1.start()
         t2.start()
+        t3.start()
         return True
     
     def tick(self, time_step_s=1):
@@ -123,7 +128,17 @@ class Vehicle:
         while True:
             if self.inbox:
                 self.handler.handle(self.inbox.pop())
+            if self.is_leader:
+                if self.status_inbox:
+                    self.info_table.update(self.status_inbox.pop())
             time.sleep(0.1)
+
+    def status_update_message(self):
+        while True:
+            if self.platoon:
+                msg = STATUS_message(self)
+                self.platoon.broadcast(msg)
+                time.sleep(20)
     
     def send_protocol_message(self, message_builder_func, *args, broadcast=True, target_id=None):
         """
@@ -142,11 +157,23 @@ class Vehicle:
         if broadcast:
             self.platoon.broadcast(sender=self, message=msg)
         elif target_id:
-            self.platoon.send_to(target_id, message=msg)
+            self.platoon.unicast(target_id, message=msg)
 
     def available_energy(self):
         return self.battery.available_energy()
 
+    def battery_capacity(self):
+        return self.battery.battery_capacity()
+    
+    def min_energy(self):
+        return self.battery.min_energy()
+    
+    def battery_health(self):
+        return self.battery.battery_health()
+    
+    def get_connections_list(self):
+        return self.connections_list
+    
     def drain_power(self, power_kw, duration_s=1):
         return self.battery.drain(power_kw, duration_s)
 
