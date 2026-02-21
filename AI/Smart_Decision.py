@@ -1,3 +1,6 @@
+def pick_a_donor(car, demand):
+    return car
+
 def pick_a_charger(requestor, platoon, amount):
     w1 = 0.8
     w2 = 0.5

@@ -45,7 +45,7 @@ def main():
         # Set the first car as the platoon leader so the others have someone to join
         if is_leader:
             p1.add_vehicle(v)
-            v.is_platoon_leader = True 
+            v.is_leader = True 
         
         # Fire up the vehicle's internal threads (tick/process_messages)
         v.start_threads()

@@ -54,39 +54,52 @@ def ACK_message(platoon_id, vehicle_id):
 
 
 # ---------- 5.5 CHARGE_RQST ----------
-def CHARGE_RQST_message(vehicle, energy_demand_kwh):
+def CHARGE_RQST_message(vehicle_id, energy_demand_kwh):
     return {
         "type": "CHARGE_RQST",
-        "vehicle_id": vehicle.vehicle_id,
+        "vehicle_id": vehicle_id,
         "energy_demand_kwh": energy_demand_kwh
     }
 
 
 # ---------- 5.6 CHARGE_RSP ----------
-def CHARGE_RSP_message(provider_vehicle, energy_amount_kwh, transfer_time_s):
+def CHARGE_RSP_message(provider_id, consumer_id, energy_amount_kwh, transfer_time_s):
     return {
         "type": "CHARGE_RSP",
-        "provider_vehicle_id": provider_vehicle.vehicle_id,
+        "provider_vehicle_id": provider_id,
+        "consumer_vehicle_id": consumer_id,
         "energy_amount_kwh": energy_amount_kwh,
         "estimated_transfer_time_s": transfer_time_s
     }
 
 
 # ---------- 5.7 CHARGE_SYN ----------
-def CHARGE_SYN_message(vehicle):
+def CHARGE_SYN_message(vehicle, demand):
     return {
         "type": "CHARGE_SYN",
         "vehicle_id": vehicle.vehicle_id,
-        "flag": "SYN"
+        "flag": "SYN",
+        "energy_amount_kwh": demand
     }
 
 
 # ---------- 5.8 CHARGE_ACK ----------
-def CHARGE_ACK_message(vehicle):
+def CHARGE_ACK_message(vehicle, packet_number):
     return {
         "type": "CHARGE_ACK",
         "vehicle_id": vehicle.vehicle_id,
-        "flag": "ACK"
+        "flag": "ACK",
+        "packet_number": packet_number,
+    }
+
+
+# ---------- 5.8 CHARGE_ACK ----------
+def ENERGY_PACKET(vehicle_id, energy, packet_number):
+    return {
+        "type": "ENERGY_PACKET",
+        "vehicle_id": vehicle_id,
+        "packet_number": packet_number,
+        "energy_amount_kwh": energy
     }
 
 

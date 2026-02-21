@@ -12,9 +12,9 @@ class Platoon:
         self.available_charger_power = 0
         self.platoon_mobility_pattern = self.calculate_mobility_pattern() #(Expected length of time the platoon stays together)
 
-    def broadcast(self, sender, message):
+    def broadcast(self, sender_id, message):
         for vehicle in self.vehicles:
-            if vehicle.vehicle_id != sender.vehicle_id:
+            if vehicle.vehicle_id != sender_id:
                 vehicle.receive_message(message)
 
     def unicast(self, target_id, message):

@@ -1,7 +1,7 @@
 import heapq
 from vehicle import energy_manager
 from protocol import info_table
-from protocol.messages import STATUS_message
+from protocol.messages import STATUS_message, CHARGE_RQST_message, ENERGY_PACKET
 from protocol import message_handler
 from vehicle import gps
 import threading
@@ -57,7 +57,7 @@ class Vehicle:
         self.inbox = []  # received messages (simulation queue)
 
         self.handler = message_handler.MessageHandler(self)
-
+        self.offers = set()
         # Connections
         self.connections_list = {}
     
@@ -137,7 +137,7 @@ class Vehicle:
         while True:
             if self.platoon:
                 msg = STATUS_message(self)
-                self.platoon.broadcast(msg)
+                self.platoon.broadcast(self, msg)
                 time.sleep(20)
     
     def send_protocol_message(self, message_builder_func, *args, broadcast=True, target_id=None):
@@ -147,7 +147,7 @@ class Vehicle:
         """
         # 1. Call the function from messages.py
         # We always pass 'self' first because your builders expect the sender vehicle
-        msg = message_builder_func(self, *args)
+        msg = message_builder_func(*args)
 
         # 2. Direct the traffic via the Platoon
         if not self.platoon:
@@ -155,7 +155,7 @@ class Vehicle:
             return
 
         if broadcast:
-            self.platoon.broadcast(sender=self, message=msg)
+            self.platoon.broadcast(sender_id=self.vehicle_id, message=msg)
         elif target_id:
             self.platoon.unicast(target_id, message=msg)
 
@@ -179,14 +179,19 @@ class Vehicle:
 
     def charge_power(self, power_kw, duration_s=1):
         return self.battery.charge(power_kw, duration_s)
-
-    def receive_message(self, msg):
-        self.inbox.append(msg)
     
-    # Zabet hal function later
     def request_power(self, power):
         self.platoon.update_total_energy_demand(power)
+        self.platoon.broadcast(self.vehicle_id, CHARGE_RQST_message(self, power))
         return True
+    
+    def get_energy_packets_number(self):
+        return 10
+
+    def start_charging(self, consumer_id, demand):
+        nb_of_packets = self.get_energy_packets_number()
+        for i in range(nb_of_packets):
+            self.send_protocol_message(ENERGY_PACKET, self.vehicle_id, demand, i, broadcast=False, target_id=consumer_id) 
 
     def add_connection(self, vehicle, edge):
         if vehicle not in self.connections_list:
