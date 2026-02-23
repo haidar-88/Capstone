@@ -1,7 +1,7 @@
 import heapq
 from vehicle import energy_manager
 from protocol import info_table
-from protocol.messages import STATUS_message, CHARGE_RQST_message, ENERGY_PACKET
+from protocol.messages import STATUS_message, CHARGE_RQST_message, ENERGY_PACKET, CHARGE_FIN_message
 from protocol import message_handler
 from vehicle import gps
 import threading
@@ -127,10 +127,10 @@ class Vehicle:
     def process_messages(self):
         while True:
             if self.inbox:
-                self.handler.handle(self.inbox.pop())
+                self.handler.handle(self.inbox.pop(0))
             if self.is_leader:
                 if self.status_inbox:
-                    self.info_table.update(self.status_inbox.pop())
+                    self.info_table.update(self.status_inbox.pop(0))
             time.sleep(0.1)
 
     def status_update_message(self):
@@ -191,7 +191,8 @@ class Vehicle:
     def start_charging(self, consumer_id, demand):
         nb_of_packets = self.get_energy_packets_number()
         for i in range(nb_of_packets):
-            self.send_protocol_message(ENERGY_PACKET, self.vehicle_id, demand, i, broadcast=False, target_id=consumer_id) 
+            self.send_protocol_message(ENERGY_PACKET, self.vehicle_id, consumer_id, demand, i, broadcast=False, target_id=consumer_id) 
+        self.send_protocol_message(CHARGE_FIN_message, self.vehicle_id, consumer_id, target_id=consumer_id)
 
     def add_connection(self, vehicle, edge):
         if vehicle not in self.connections_list:

@@ -94,20 +94,22 @@ def CHARGE_ACK_message(vehicle, packet_number):
 
 
 # ---------- 5.8 CHARGE_ACK ----------
-def ENERGY_PACKET(vehicle_id, energy, packet_number):
+def ENERGY_PACKET(vehicle_id, consumer_id, energy, packet_number):
     return {
         "type": "ENERGY_PACKET",
         "vehicle_id": vehicle_id,
+        "consumer_id": consumer_id,
         "packet_number": packet_number,
         "energy_amount_kwh": energy
     }
 
 
 # ---------- 5.9 CHARGE_FIN ----------
-def CHARGE_FIN_message(vehicle):
+def CHARGE_FIN_message(vehicle_id, consumer_id):
     return {
         "type": "CHARGE_FIN",
-        "vehicle_id": vehicle.vehicle_id,
+        "vehicle_id": vehicle_id,
+        "consumer_id": consumer_id,
         "flag": "FIN"
     }
 

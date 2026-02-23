@@ -179,12 +179,16 @@ class MessageHandler:
 
     def handle_energy_packet(self, pckt):
         provider_id = pckt["vehicle_id"]
+        consumer_id = pckt["consumer_id"]
         packet_nb = pckt["packet_number"]
         energy = pckt["energy_amount_kwh"]
+        if packet_nb == 0:
+            print(f"[{consumer_id}] Received Packet Number {packet_nb}. Starting Charging Sequence.")
+            return
         self.vehicle.charge_power(energy)
-        print(f"[{self.vehicle.vehicle_id}] Charged {energy} from {provider_id}. Packet Number {packet_nb}")
+        print(f"[{consumer_id}] Charged {energy} from [{provider_id}]. Packet Number {packet_nb}")
         ack_msg = messages.CHARGE_ACK_message(self.vehicle, packet_nb)
-        self.vehicle.platoon.unicast(self.vehicle.vehicle_id, ack_msg)
+        self.vehicle.platoon.unicast(provider_id, ack_msg)
 
     def handle_charge_fin(self, msg):
         """
