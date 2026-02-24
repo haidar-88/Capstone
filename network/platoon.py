@@ -10,7 +10,6 @@ class Platoon:
         self.max_vehicles = 6
         self.total_energy_demand = 0
         self.available_charger_power = 0
-        self.platoon_mobility_pattern = self.calculate_mobility_pattern() #(Expected length of time the platoon stays together)
 
     def broadcast(self, sender_id, message):
         for vehicle in self.vehicles:
@@ -23,9 +22,6 @@ class Platoon:
                 vehicle.receive_message(message)
                 return
 
-    def calculate_mobility_pattern(self):
-        return 0
-
     def can_add_vehicle(self):
         return self.max_vehicles > self.vehicle_number
 
@@ -37,6 +33,7 @@ class Platoon:
         self.vehicles.append(vehicle)
         vehicle.platoon = self
         self.update_available_charger_power(vehicle.available_energy())
+        self.update_total_energy_demand(vehicle.battery_capacity() - vehicle.available_energy())
         return True
 
     def remove_vehicle(self, vehicle):
@@ -45,6 +42,7 @@ class Platoon:
         self.vehicle_number = self.vehicle_number - 1
         self.vehicles.remove(vehicle)
         self.update_available_charger_power(vehicle.available_energy())
+        self.update_total_energy_demand(vehicle.battery_capacity() - vehicle.available_energy())
         return True
     
     def find_provider(self, demand):
@@ -62,14 +60,11 @@ class Platoon:
         self.total_energy_demand = self.total_energy_demand + request
         return True
     
-    def total_energy_available(self):
-        return sum(v.available_energy() for v in self.vehicles)
+    def get_total_energy_available(self):
+        return self.available_charger_power
     
     def get_total_energy_demand(self):
         return self.total_energy_demand
-    
-    def mobility_pattern(self):
-        return self.platoon_mobility_pattern
     
     def __str__(self):
         vehicle_ids = [getattr(vehicle, "vehicle_id", "N/A") for vehicle in self.vehicles]
@@ -78,9 +73,8 @@ class Platoon:
             f"Platoon Status:\n"
             f"----------------\n"
             f"Platoon ID            : {self.platoon_id}\n"
-            f"vehicles in platoon      : {self.vehicle_number}/{self.max_vehicles}\n"
-            f"vehicle IDs              : {vehicle_ids}\n"
+            f"vehicles in platoon   : {self.vehicle_number}/{self.max_vehicles}\n"
+            f"vehicle IDs           : {vehicle_ids}\n"
             f"Total energy demand   : {self.total_energy_demand:.2f} kWh\n"
             f"Available charger pow : {self.available_charger_power:.2f} kW\n"
-            f"Mobility pattern time : {self.platoon_mobility_pattern}"
         )

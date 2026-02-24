@@ -161,13 +161,14 @@ class MessageHandler:
         """
         consumer_id = msg["vehicle_id"]
         demand = msg["energy_amount_kwh"]
+        consumer_max_transfer_rate_in = msg["max_transfer_rate_in"]
 
         # Send 5.8 CHARGE_ACK
         ack_msg = messages.CHARGE_ACK_message(self.vehicle, 0)
         self.vehicle.platoon.unicast(msg["vehicle_id"], ack_msg)
         
         print(f"[{self.vehicle.vehicle_id}] SYN received. Sending ACK and starting charge.")
-        self.vehicle.start_charging(consumer_id, demand)
+        self.vehicle.start_charging(consumer_id, demand, consumer_max_transfer_rate_in)
 
     def handle_charge_ack(self, msg):
         """

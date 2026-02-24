@@ -1,11 +1,15 @@
-import heapq
 from vehicle import energy_manager
+from vehicle import edge
+from vehicle import gps
+
 from protocol import info_table
 from protocol.messages import STATUS_message, CHARGE_RQST_message, ENERGY_PACKET, CHARGE_FIN_message
 from protocol import message_handler
-from vehicle import gps
+
 import threading
 import time
+import heapq
+import math
 
 class Vehicle:
     """
@@ -19,8 +23,9 @@ class Vehicle:
             battery_capacity_kwh,          # Total battery capacity (kWh)
             initial_energy_kwh,            # Current energy (kWh)
             min_energy_kwh,                # Minimum allowed energy (kWh)
-            max_transfer_rate_in=50.0,     # Max charge power (kW)
-            max_transfer_rate_out=50.0,    # Max discharge power (kW)
+            max_transfer_rate_in=10.0,     # Max charge power (kW)
+            max_transfer_rate_out=10.0,    # Max discharge power (kW)
+            connection_range=10,
             latitude=0.0,
             longitude=0.0,
             heading=0.0,                   # 0-360 degrees, represents the direction the car is going in
@@ -45,6 +50,7 @@ class Vehicle:
         # GPS & motion
         self.gps = gps.GPS(latitude, longitude, heading)
         self.velocity = velocity
+        self.connection_range = connection_range
 
         # Platoon info
         self.platoon = platoon
@@ -86,9 +92,11 @@ class Vehicle:
             time.sleep(1)
     
     def evaluate_platoon_offer(self, msg):
-        # If I am not in a platoon, I accept.
+        total_energy_available = msg["platoon_total_energy_available"]
+        total_energy_demand = msg["platoon_total_energy_demand"]
         if self.platoon is None:
-            return True
+            if (total_energy_available > total_energy_demand) and (total_energy_available > self.available_energy):
+                return True
         return False
 
     def position(self):
@@ -105,8 +113,10 @@ class Vehicle:
     def unicast(self, vehicle, response):
         vehicle.receive_message(response)
     
-    def is_in_platoon(self):
-        return self.platoon is not None
+    def get_platoon(self):
+        if not self.platoon:
+            return None
+        return self.platoon
 
     def join_platoon(self, platoon):
         if not self.platoon:
@@ -185,18 +195,22 @@ class Vehicle:
         self.platoon.broadcast(self.vehicle_id, CHARGE_RQST_message(self, power))
         return True
     
-    def get_energy_packets_number(self):
-        return 10
+    def get_energy_packets_number(demand, consumer_in, provider_out, tick_seconds=1):
+        # Energy per packet = min(max out, max in) × tick duration in hours
+        e_packet = min(provider_out, consumer_in) * (tick_seconds / 3600.0)
+        num_packets = math.ceil(demand / e_packet)
+        return num_packets
 
-    def start_charging(self, consumer_id, demand):
-        nb_of_packets = self.get_energy_packets_number()
+    def start_charging(self, consumer_id, demand, consumer_max_transfer_rate_in):
+        nb_of_packets = self.get_energy_packets_number(demand, consumer_max_transfer_rate_in, self.battery.get_max_transfer_rate_out())
         for i in range(nb_of_packets):
             self.send_protocol_message(ENERGY_PACKET, self.vehicle_id, consumer_id, demand, i, broadcast=False, target_id=consumer_id) 
         self.send_protocol_message(CHARGE_FIN_message, self.vehicle_id, consumer_id, target_id=consumer_id)
 
-    def add_connection(self, vehicle, edge):
+    def add_connection(self, vehicle):
+        connection_edge = edge.Edge(self, vehicle)
         if vehicle not in self.connections_list:
-            self.connections_list[vehicle] = edge
+            self.connections_list[vehicle] = connection_edge
         return True
 
     def remove_connection(self, vehicle):

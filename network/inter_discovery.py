@@ -3,10 +3,8 @@ from protocol import messages
 import threading
 
 class Network:
-    def __init__(self, discovery_range_m=10.0):
+    def __init__(self):
         self.all_vehicles = []
-        self.discovery_range_m = discovery_range_m
-        print(self.discovery_range_m)
 
     def start_threads(self):
         t1 = threading.Thread(target=self.scan_for_neighbors, args=())
@@ -22,7 +20,6 @@ class Network:
         Checks distances between all vehicles. 
         If two vehicles are within range, they 'hear' each other.
         """
-
         while True:
             print("scanning near cars.....")
             for v1 in self.all_vehicles:
@@ -31,10 +28,16 @@ class Network:
                         continue
                     # Calculate distance using the GPS module
                     dist = v1.distance_to(v2.position())
-                    if (not v1.is_in_platoon() and v2.is_in_platoon()) and (dist <= self.discovery_range_m):
+                    if (not v1.get_platoon() and v2.get_platoon()) and (dist <= v1.connection_range):
                         # Trigger automatic HELLO exchange
                         self.exchange_hello(v1, v2)
-            time.sleep(2)
+                    elif (v1.get_platoon() == v2.get_platoon()):
+                        if (dist <= v1.connection_range):
+                            v1.add_connection(v2)
+                        else:
+                            v1.remove_connection(v2)
+                        
+            time.sleep(1)
 
     def exchange_hello(self, v1, v2):
         """Simulates the wireless handshake when cars get close"""

@@ -24,6 +24,11 @@ class BatteryManager:
     # -------------------------
     # STATE QUERIES
     # -------------------------
+    def get_max_transfer_rate_in(self):
+        return self.max_transfer_rate_in
+    
+    def get_max_transfer_rate_out(self):
+        return self.max_transfer_rate_out
 
     def available_energy(self):
         return self.energy_kwh
