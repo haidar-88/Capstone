@@ -6,7 +6,7 @@ from network.inter_discovery import Network
 
 def main():
     # 1. Setup the Network (Range set to 100m)
-    net = Network(discovery_range_m=5.0)
+    net = Network()
     net.start_threads()
 
     # 2. Setup the Platoon object

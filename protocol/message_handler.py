@@ -76,6 +76,9 @@ class MessageHandler:
         if platoon_id in self.vehicle.offers: # Discard other offers from same platoon
             return
         
+        if self.vehicle.platoon is not None:
+            return  # Already joined, ignore
+        
         self.vehicle.offers.add(platoon_id)
         
         # Logic to decide if we want to join (based on destination, energy, etc.)
@@ -88,19 +91,24 @@ class MessageHandler:
 
     def handle_join_accept(self, msg):
         """
-        5.3 JOIN_ACCEPT: Received by the Platoon Node (Head).
+        5.3 JOIN_ACCEPT: Received by the Platoon Node
         Action: Add vehicle to platoon registry and send ACK.
         """
         new_member_id = msg["vehicle_id"]
         platoon_id = msg["platoon_id"]
         new_member = msg["vehicle"]
 
-        if msg["accept"]:
+        platoon = self.vehicle.get_platoon()
+
+        if new_member in self.vehicle.platoon.vehicles:
+            return  # Already added
+        
+        if msg["accept"] and platoon.platoon_id == platoon_id:
             # Logic to add the member to the local platoon structure
             self.vehicle.platoon.add_vehicle(new_member)
             
             # Send 5.4 ACK
-            response = messages.ACK_message(platoon_id, new_member_id)
+            response = messages.ACK_message(platoon, new_member_id)
             self.vehicle.unicast(new_member, response)
             print(f"[{self.vehicle.vehicle_id}] Sent ACK to new member {new_member_id}\n")
 
@@ -109,9 +117,10 @@ class MessageHandler:
         5.4 ACK: Received by the Joining Vehicle.
         """
         if msg["vehicle_id"] == self.vehicle.vehicle_id:
-            self.vehicle.platoon_id = msg["platoon_id"]
-            self.vehicle.offers.remove(self.vehicle.platoon_id)
-            print(f"[{self.vehicle.vehicle_id}] Joined Platoon {msg['platoon_id']} successfully.\n")
+            platoon = msg["platoon"]
+            self.vehicle.join_platoon(platoon)
+            self.vehicle.offers.remove(platoon.platoon_id)
+            print(f"[{self.vehicle.vehicle_id}] Joined Platoon {msg['platoon']} successfully.\n")
 
     def handle_charge_rqst(self, msg):
         """
@@ -131,7 +140,7 @@ class MessageHandler:
                 # 5.6 CHARGE_RSP (Broadcast so both Provider and Consumer see it)
                 # Note: 'provider' here implies an object, we need the ID or object depending on your logic
                 # Assuming 'provider' is a vehicle object available to the head's logic
-                response = messages.CHARGE_RSP_message(provider.vehicle_id, consumer_id, demand, transfer_time_s=300) 
+                response = messages.CHARGE_RSP_message(provider.vehicle_id, consumer_id, demand) 
                 self.vehicle.platoon.broadcast(self.vehicle.vehicle_id, response)
 
     def handle_charge_rsp(self, msg):
@@ -162,7 +171,7 @@ class MessageHandler:
         consumer_id = msg["vehicle_id"]
         demand = msg["energy_amount_kwh"]
         consumer_max_transfer_rate_in = msg["max_transfer_rate_in"]
-
+        
         # Send 5.8 CHARGE_ACK
         ack_msg = messages.CHARGE_ACK_message(self.vehicle, 0)
         self.vehicle.platoon.unicast(msg["vehicle_id"], ack_msg)

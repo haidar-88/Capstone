@@ -64,13 +64,15 @@ class Vehicle:
 
         self.handler = message_handler.MessageHandler(self)
         self.offers = set()
+        self.hellos_sent = set()
+
         # Connections
         self.connections_list = {}
     
     def start_threads(self): #method to start all threads for a car
-        t1 = threading.Thread(target=self.tick, args=())
-        t2 = threading.Thread(target=self.process_messages, args=())
-        t3 = threading.Thread(target=self.status_update_message, args=())
+        t1 = threading.Thread(target=self.tick, args=(), daemon=True)
+        t2 = threading.Thread(target=self.process_messages, args=(), daemon=True)
+        t3 = threading.Thread(target=self.status_update_message, args=(), daemon=True)
         t1.start()
         t2.start()
         t3.start()
@@ -95,7 +97,7 @@ class Vehicle:
         total_energy_available = msg["platoon_total_energy_available"]
         total_energy_demand = msg["platoon_total_energy_demand"]
         if self.platoon is None:
-            if (total_energy_available > total_energy_demand) and (total_energy_available > self.available_energy):
+            if (total_energy_available > total_energy_demand) and (total_energy_available > self.available_energy()):
                 return True
         return False
 
@@ -103,11 +105,11 @@ class Vehicle:
         """Returns (lat, lon) from the GPS module"""
         return self.gps.get_position()
     
-    def distance_to(self, other_vehicle_pos):
+    def distance_to(self, other_vehicle):
         """
         Calculates distance in meters to another vehicle's position tuple (lat, lon)
         """
-        target_lat, target_lon = other_vehicle_pos
+        target_lat, target_lon = other_vehicle.position()
         return self.gps.get_distance_to(target_lat, target_lon)
     
     def unicast(self, vehicle, response):
@@ -158,10 +160,9 @@ class Vehicle:
         # 1. Call the function from messages.py
         # We always pass 'self' first because your builders expect the sender vehicle
         msg = message_builder_func(*args)
-
         # 2. Direct the traffic via the Platoon
         if not self.platoon:
-            print(f"Vehicle {self.node_id} has no platoon to send to!")
+            print(f"Vehicle {self.vehicle_id} has no platoon to send to!")
             return
 
         if broadcast:
@@ -195,7 +196,7 @@ class Vehicle:
         self.platoon.broadcast(self.vehicle_id, CHARGE_RQST_message(self, power))
         return True
     
-    def get_energy_packets_number(demand, consumer_in, provider_out, tick_seconds=1):
+    def get_energy_packets_number(self, demand, consumer_in, provider_out, tick_seconds=100):
         # Energy per packet = min(max out, max in) × tick duration in hours
         e_packet = min(provider_out, consumer_in) * (tick_seconds / 3600.0)
         num_packets = math.ceil(demand / e_packet)
@@ -215,7 +216,7 @@ class Vehicle:
 
     def remove_connection(self, vehicle):
         if vehicle in self.connections_list:
-            self.connections_list.remove(vehicle)
+            del self.connections_list[vehicle]
             return True
         return False
     
@@ -281,16 +282,15 @@ class Vehicle:
         return (
             f"vehicle Status:\n"
             f"-----------\n"
-            f"vehicle ID              : {self.vehicle_id}\n"
-            f"Energy               : {self.battery.energy_kwh:.3f} / {self.battery.capacity_kwh:.3f} kWh\n"
-            f"Minimum energy       : {self.battery.min_energy_kwh:.3f} kWh\n"
-            f"Battery health       : {self.battery.battery_health:.2f}\n"
-            f"Max charge rate      : {self.battery.max_transfer_rate_in:.1f} kW\n"
-            f"Max discharge rate   : {self.battery.max_transfer_rate_out:.1f} kW\n"
+            f"vehicle ID           : {self.vehicle_id}\n"
+            f"Energy               : {self.battery.available_energy():.3f} / {self.battery.capacity_kwh:.3f} kWh\n"
+            f"Minimum energy       : {self.battery.min_energy():.3f} kWh\n"
+            f"Battery health       : {self.battery.battery_health():.2f}\n"
+            f"Max charge rate      : {self.battery.get_max_transfer_rate_in():.1f} kW\n"
+            f"Max discharge rate   : {self.battery.get_max_transfer_rate_out():.1f} kW\n"
             f"Position (lat, lon)  : ({self.gps.get_position()})\n"
             f"Velocity             : {self.velocity:.2f} m/s\n"
-            f"Platoon              : {self.platoon.platoon_id}\n"
+            f"Platoon              : {self.platoon.platoon_id if self.platoon else None}\n"
             f"Leader               : {self.is_leader}\n"
             f"Connections          : {temp}"
         )
-

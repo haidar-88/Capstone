@@ -9,7 +9,7 @@ from protocol import messages
 
 def main():
     # 1. Setup the Network (Range set to 100m)
-    net = Network(discovery_range_m=100.0)
+    net = Network()
     net.start_threads()
 
     # 2. Setup the Platoon object
@@ -21,7 +21,7 @@ def main():
     base_y = 0.0      # meters
     spacing = 10.0    # 10 meters between vehicles
 
-    print("--- Initializing 6 Vehicles ---")
+    print("Step 1: Initializing 6 Vehicles")
 
     for i in range(6):
         is_leader = (i == 0)
@@ -53,13 +53,13 @@ def main():
         v.start_threads()
         vehicles.append(v)
 
-    print("\n--- Starting Protocol Sequence ---")
+    print("Step 1 Done")
+    print("\n--- Starting Protocol Sequence, Sleeping for 10 seconds ---")
 
     v1 = vehicles[2]
-    v2 = vehicles[3]
+    time.sleep(10)
 
-    time.sleep(5)
-
+    print("All vehicles should be in the platoon now. Sending Charging Request")
     try:
         v1.send_protocol_message(
             messages.CHARGE_RQST_message,
@@ -70,6 +70,7 @@ def main():
     except KeyboardInterrupt:
         print("\nSimulation Terminated.")
 
+    input("Press Enter to exit...\n")
 
 if __name__ == "__main__":
     main()

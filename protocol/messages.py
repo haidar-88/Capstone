@@ -11,8 +11,8 @@ def HELLO_message(vehicle):
         "vehicle": vehicle,
         "energy_available": vehicle.available_energy(),
         "position": vehicle.position(),  # (lat, lon)
-        "max_transfer_rate_in": vehicle.battery.max_transfer_rate_in,
-        "max_transfer_rate_out": vehicle.battery.max_transfer_rate_out
+        "max_transfer_rate_in": vehicle.battery.get_max_transfer_rate_in(),
+        "max_transfer_rate_out": vehicle.battery.get_max_transfer_rate_out()
     }
 
 
@@ -44,10 +44,10 @@ def JOIN_ACCEPT_message(vehicle, platoon_id):
 
 
 # ---------- 5.4 ACK ----------
-def ACK_message(platoon_id, vehicle_id):
+def ACK_message(platoon, vehicle_id):
     return {
         "type": "ACK",
-        "platoon_id": platoon_id,
+        "platoon": platoon,
         "vehicle_id": vehicle_id
     }
 
@@ -62,13 +62,12 @@ def CHARGE_RQST_message(vehicle_id, energy_demand_kwh):
 
 
 # ---------- 5.6 CHARGE_RSP ----------
-def CHARGE_RSP_message(provider_id, consumer_id, energy_amount_kwh, transfer_time_s):
+def CHARGE_RSP_message(provider_id, consumer_id, energy_amount_kwh):
     return {
         "type": "CHARGE_RSP",
         "provider_vehicle_id": provider_id,
         "consumer_vehicle_id": consumer_id,
-        "energy_amount_kwh": energy_amount_kwh,
-        "estimated_transfer_time_s": transfer_time_s
+        "energy_amount_kwh": energy_amount_kwh
     }
 
 
@@ -79,7 +78,7 @@ def CHARGE_SYN_message(vehicle, demand):
         "vehicle_id": vehicle.vehicle_id,
         "flag": "SYN",
         "energy_amount_kwh": demand,
-        "max_transfer_rate_in": vehicle.max_transfer_rate_in
+        "max_transfer_rate_in": vehicle.battery.get_max_transfer_rate_in()
     }
 
 
@@ -123,7 +122,7 @@ def STATUS_message(vehicle):
         "battery_capacity": vehicle.battery_capacity(),
         "min_energy_kwh": vehicle.min_energy(),
         "battery_health": vehicle.battery_health(),
-        "connections": vehicle.get_connections_list
+        "connections": vehicle.get_connections_list()
     }
 
 

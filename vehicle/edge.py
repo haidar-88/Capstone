@@ -14,7 +14,7 @@ class Edge:
         self.transfer_efficiency = 0
         self.energy_loss = 0.0  # kWh lost in transfer
         self.edge_cost = 0
-        t1 = threading.Thread(target=self.update_parameters(), args=())
+        t1 = threading.Thread(target=self.update_parameters, args=(), daemon=True)
         t1.start()
 
     def update_parameters(self):
@@ -25,7 +25,7 @@ class Edge:
             self.edge_cost = self.calculate_cost()
             time.sleep(1)
 
-    def energy_loss_percentage(distance_m, 
+    def energy_loss_percentage(self, distance_m, 
                                max_efficiency=0.95, 
                                decay_factor=0.05, 
                                hardware_efficiency=0.9):
@@ -58,8 +58,8 @@ class Edge:
         Efficiency ratio (0 → 1) based on node hardware limits.
         Example: ratio of destination max input vs source max output
         """
-        source_out = self.source.max_transfer_rate_out
-        dest_in = self.destination.max_transfer_rate_in
+        source_out = self.source.battery.get_max_transfer_rate_out()
+        dest_in = self.destination.battery.get_max_transfer_rate_in()
 
         efficiency = dest_in / max(source_out, dest_in)
         return min(max(efficiency, 0.0), 1.0)
