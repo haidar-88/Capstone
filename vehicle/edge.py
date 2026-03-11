@@ -14,11 +14,16 @@ class Edge:
         self.transfer_efficiency = 0
         self.energy_loss = 0.0  # kWh lost in transfer
         self.edge_cost = 0
+        self._running = True
         t1 = threading.Thread(target=self.update_parameters, args=(), daemon=True)
         t1.start()
 
+    def stop(self):
+        """Signal the background thread to exit."""
+        self._running = False
+
     def update_parameters(self):
-        while True:
+        while self._running:
             self.distance = self.get_distance()
             self.transfer_efficiency = self.calculate_transfer_efficiency()
             self.energy_loss = self.energy_loss_percentage(self.distance)

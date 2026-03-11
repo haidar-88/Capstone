@@ -209,13 +209,13 @@ class Vehicle:
         self.send_protocol_message(CHARGE_FIN_message, self.vehicle_id, consumer_id, target_id=consumer_id)
 
     def add_connection(self, vehicle):
-        connection_edge = edge.Edge(self, vehicle)
         if vehicle not in self.connections_list:
-            self.connections_list[vehicle] = connection_edge
+            self.connections_list[vehicle] = edge.Edge(self, vehicle)
         return True
 
     def remove_connection(self, vehicle):
         if vehicle in self.connections_list:
+            self.connections_list[vehicle].stop()
             del self.connections_list[vehicle]
             return True
         return False
