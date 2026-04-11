@@ -1,18 +1,68 @@
-def pick_a_donor(car, demand):
-    return car
+from AI.donor_scorer import score_candidate, get_max_dist_cost
+from AI.donor_weights import load_weights
+
+
+def pick_a_donor(head_vehicle, demand, exclude_id=None):
+    """
+    Select the best provider vehicle from the platoon using MCDA scoring.
+
+    Called by MessageHandler.handle_charge_rqst when self.vehicle.is_leader.
+
+    Args:
+        head_vehicle: Platoon head Vehicle object (self.vehicle in the handler)
+        demand:       kWh requested by the consumer
+        exclude_id:   vehicle_id of the consumer — excluded from candidacy
+
+    Returns:
+        The best provider Vehicle object, or None if no eligible provider exists.
+    """
+    if head_vehicle.platoon is None:
+        return None
+
+    candidates = [
+        v for v in head_vehicle.platoon.vehicles
+        if v is not head_vehicle
+        and (exclude_id is None or v.vehicle_id != exclude_id)
+    ]
+
+    if not candidates:
+        return None
+
+    weights = load_weights()
+    max_cost = get_max_dist_cost(head_vehicle, candidates)
+
+    best_vehicle = None
+    best_score = float('-inf')
+    for candidate in candidates:
+        s = score_candidate(candidate, head_vehicle, demand, weights, max_cost)
+        if s > best_score:
+            best_score = s
+            best_vehicle = candidate
+
+    return best_vehicle  # None only if every candidate failed feasibility gates
+
 
 def pick_a_charger(requestor, platoon, amount):
-    w1 = 0.8
-    w2 = 0.5
-    dist, path_to = requestor.dijkstra()
-    proba = [0] * (platoon.node_number + 1)
-    for node in platoon.nodes:
-        if node == requestor:
-            continue
-        if ((node.battery_health < 0.4) and (node.battery_energy_kwh/node.battery_capacity_kwh < 0.8)) or (node.battery_energy_kwh-amount < node.min_energy_kwh):
-            continue
-        #proba[node.node_id] = w1 * dist[node.node_id] + w2 * node.battery_energy_kwh
-        proba[node.node_id] = w2 * node.battery_energy_kwh - w1 * dist[node.node_id]
+    """
+    Deprecated — was never called; retained for API compatibility.
+    Delegates to the same MCDA scorer used by pick_a_donor.
 
-    print(f"Distance: {dist}\nPath To: {path_to}\nProbability: {proba}")
-    return proba.index(max(proba))
+    Returns:
+        vehicle_id of the chosen provider, or None.
+    """
+    candidates = [v for v in platoon.vehicles if v is not requestor]
+    if not candidates:
+        return None
+
+    weights = load_weights()
+    max_cost = get_max_dist_cost(requestor, candidates)
+
+    best_id = None
+    best_score = float('-inf')
+    for candidate in candidates:
+        s = score_candidate(candidate, requestor, amount, weights, max_cost)
+        if s > best_score:
+            best_score = s
+            best_id = candidate.vehicle_id
+
+    return best_id

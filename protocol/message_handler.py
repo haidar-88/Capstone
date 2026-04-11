@@ -133,10 +133,10 @@ class MessageHandler:
             demand = msg["energy_demand_kwh"]
 
             # Logic to find a suitable provider in the platoon
-            provider = pick_a_donor(self.vehicle, demand)
-            print(f"Car {provider.vehicle_id} will send {consumer_id} {demand}kwh of energy")
+            provider = pick_a_donor(self.vehicle, demand, exclude_id=consumer_id)
 
             if provider:
+                print(f"Car {provider.vehicle_id} will send {consumer_id} {demand}kwh of energy")
                 # 5.6 CHARGE_RSP (Broadcast so both Provider and Consumer see it)
                 # Note: 'provider' here implies an object, we need the ID or object depending on your logic
                 # Assuming 'provider' is a vehicle object available to the head's logic
