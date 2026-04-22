@@ -65,9 +65,13 @@ class BatteryManager:
         self.energy_kwh -= energy_used
         return True
 
-    def charge(self, power_kw, duration_s=1):
-        power_kw = min(power_kw, self.max_transfer_rate_in)
-        energy_added = (power_kw * duration_s) / 3600.0
-
-        self.energy_kwh = min(self.energy_kwh + energy_added, self.capacity_kwh)
+    def charge(self, energy_kwh):
+        self.energy_kwh = min(self.energy_kwh + energy_kwh, self.capacity_kwh)
         return True
+
+    def drain_energy(self, energy_kwh):
+        """Deduct energy_kwh directly, clamped so SoC never drops below min_energy_kwh."""
+        drainable = max(0.0, self.energy_kwh - self.min_energy_kwh)
+        actual = min(energy_kwh, drainable)
+        self.energy_kwh -= actual
+        return actual

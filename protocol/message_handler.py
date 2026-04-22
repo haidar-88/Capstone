@@ -1,15 +1,35 @@
 from protocol import messages
 from AI.smart_decision import pick_a_donor
 
+
 class MessageHandler:
     def __init__(self, vehicle):
         self.vehicle = vehicle
+
+    def _record(self, msg_type, sender_id):
+        """Log a message event to the metrics collector, if attached."""
+        m = getattr(self.vehicle, "metrics", None)
+        if m is not None:
+            m.record_message(msg_type, sender_id,
+                             self.vehicle.vehicle_id)
+            m.record_delivery(msg_type)
+
+    def _record_send(self, msg_type: str):
+        m = getattr(self.vehicle, "metrics", None)
+        if m is not None:
+            m.record_send_attempt(msg_type)
+
+    def _sim_time(self) -> float:
+        """Return current simulation time, or 0 if no metrics attached."""
+        m = getattr(self.vehicle, "metrics", None)
+        return m.sim_time() if m is not None else 0.0
 
     def handle(self, message):
         """
         Main dispatcher for incoming messages.
         """
         msg_type = message.get("type")
+        self._record(msg_type, message.get("vehicle_id", ""))
 
         # --- Discovery & Joining ---
         if msg_type == "HELLO":
@@ -57,8 +77,9 @@ class MessageHandler:
         
         print(f"{sender_id} sent HELLO to {self.vehicle.vehicle_id}")
         # Only the Platoon Head (or designated recruiter) usually responds
-        if self.vehicle.platoon.can_add_vehicle(): # and self.vehicle.is_leader -- removed this condition
-            
+        if self.vehicle.platoon is not None and self.vehicle.platoon.can_add_vehicle():
+
+            self._record_send("JOIN_OFFER")
             # Construct the offer using your builder function
             response = messages.JOIN_OFFER_message(self.vehicle, sender_id)
             
@@ -85,6 +106,7 @@ class MessageHandler:
         should_join = self.vehicle.evaluate_platoon_offer(msg)
 
         if should_join:
+            self._record_send("JOIN_ACCEPT")
             response = messages.JOIN_ACCEPT_message(self.vehicle, platoon_id)
             self.vehicle.unicast(msg["vehicle"], response)
             print(f"[{self.vehicle.vehicle_id}] Accepted offer from Platoon {platoon_id}\n")
@@ -104,6 +126,7 @@ class MessageHandler:
             return  # Already added
         
         if msg["accept"] and platoon.platoon_id == platoon_id:
+            self._record_send("ACK")
             # Logic to add the member to the local platoon structure
             self.vehicle.platoon.add_vehicle(new_member)
             
@@ -121,6 +144,10 @@ class MessageHandler:
             self.vehicle.join_platoon(platoon)
             self.vehicle.offers.remove(platoon.platoon_id)
             print(f"[{self.vehicle.vehicle_id}] Joined Platoon {msg['platoon']} successfully.\n")
+            m = getattr(self.vehicle, "metrics", None)
+            if m is not None:
+                m.record_platoon_join(self.vehicle.vehicle_id,
+                                      platoon.platoon_id, self._sim_time())
 
     def handle_charge_rqst(self, msg):
         """
@@ -136,6 +163,10 @@ class MessageHandler:
             provider = pick_a_donor(self.vehicle, demand, exclude_id=consumer_id)
 
             if provider:
+                self._record_send("CHARGE_RSP")
+                m = getattr(self.vehicle, "metrics", None)
+                if m is not None:
+                    m.record_charge_assignment(provider.vehicle_id, consumer_id)
                 print(f"Car {provider.vehicle_id} will send {consumer_id} {demand}kwh of energy")
                 # 5.6 CHARGE_RSP (Broadcast so both Provider and Consumer see it)
                 # Note: 'provider' here implies an object, we need the ID or object depending on your logic
@@ -146,35 +177,35 @@ class MessageHandler:
     def handle_charge_rsp(self, msg):
         """
         5.6 CHARGE_RSP: Received by All (Broadcast).
-        Action: 
-        - Provider: Send CHARGE_SYN.
-        - Consumer: Prepare to receive.
+        Action:
+        - Consumer: send CHARGE_SYN to the selected provider.
+        - Others (including the provider): no-op here; the provider
+          reacts to the SYN it receives next.
         """
         provider_id = msg["provider_vehicle_id"]
         consumer_id = msg["consumer_vehicle_id"]
         demand = msg["energy_amount_kwh"]
 
-        # If I am the Provider
+        # Only the designated consumer initiates the handshake.
         if self.vehicle.vehicle_id == consumer_id:
-            # Send 5.7 SYN to start the handshake
+            self._record_send("CHARGE_SYN")
             syn_msg = messages.CHARGE_SYN_message(self.vehicle, demand)
-
-            # For this protocol def, we likely broadcast SYN or target the consumer if known.
-            self.vehicle.platoon.unicast(provider_id, syn_msg) 
+            self.vehicle.platoon.unicast(provider_id, syn_msg, sender_id=self.vehicle.vehicle_id)
             print(f"Consumer [{self.vehicle.vehicle_id}] sending SYN to provider.")
 
     def handle_charge_syn(self, msg):
         """
-        5.7 CHARGE_SYN: Received by Consumer.
+        5.7 CHARGE_SYN: Received by Provider.
         Action: Start physical charging simulation and send ACK.
         """
         consumer_id = msg["vehicle_id"]
         demand = msg["energy_amount_kwh"]
         consumer_max_transfer_rate_in = msg["max_transfer_rate_in"]
-        
+
+        self._record_send("CHARGE_ACK")
         # Send 5.8 CHARGE_ACK
         ack_msg = messages.CHARGE_ACK_message(self.vehicle, 0)
-        self.vehicle.platoon.unicast(msg["vehicle_id"], ack_msg)
+        self.vehicle.platoon.unicast(msg["vehicle_id"], ack_msg, sender_id=self.vehicle.vehicle_id)
         
         print(f"[{self.vehicle.vehicle_id}] SYN received. Sending ACK and starting charge.")
         self.vehicle.start_charging(consumer_id, demand, consumer_max_transfer_rate_in)
@@ -192,13 +223,21 @@ class MessageHandler:
         consumer_id = pckt["consumer_id"]
         packet_nb = pckt["packet_number"]
         energy = pckt["energy_amount_kwh"]
-        if packet_nb == 0:
-            print(f"[{consumer_id}] Received Packet Number {packet_nb}. Starting Charging Sequence.")
-            return
-        self.vehicle.charge_power(energy)
-        print(f"[{consumer_id}] Charged {energy} from [{provider_id}]. Packet Number {packet_nb}")
+        energy_before = self.vehicle.available_energy()
+        self.vehicle.charge_energy(energy)
+        actual_received = self.vehicle.available_energy() - energy_before
+        m = getattr(self.vehicle, "metrics", None)
+        if m is not None and actual_received > 0:
+            m.record_energy_received(consumer_id, actual_received)
+            m.record_energy_sent(provider_id, actual_received)
+            m.record_session_energy(provider_id, consumer_id, actual_received)
+        print(f"[{consumer_id}] Charged {energy:.4f} kWh from [{provider_id}]. Packet #{packet_nb}")
+        # NOTE: CHARGE_ACK sends are counted at the single emission site
+        # inside handle_charge_syn / here; handle_charge_syn records the
+        # initial ACK, and this path records one ACK per ENERGY_PACKET.
+        self._record_send("CHARGE_ACK")
         ack_msg = messages.CHARGE_ACK_message(self.vehicle, packet_nb)
-        self.vehicle.platoon.unicast(provider_id, ack_msg)
+        self.vehicle.platoon.unicast(provider_id, ack_msg, sender_id=self.vehicle.vehicle_id)
 
     def handle_charge_fin(self, msg):
         """
@@ -207,21 +246,22 @@ class MessageHandler:
         """
         provider_id = msg["vehicle_id"]
         print(f"Ending Charging. Signaled by FIN mssg from [{provider_id}]")
-        
+        if hasattr(self.vehicle, '_charge_requested'):
+            self.vehicle._charge_requested = False
+        m = getattr(self.vehicle, "metrics", None)
+        if m is not None:
+            m.record_charge_session_end(provider_id,
+                                        self.vehicle.vehicle_id,
+                                        self._sim_time())
+
 
     def handle_platoon_status(self, msg):
         """
-        5.10 PLATOON_STATUS: Received by Platoon Head.
-        Action: Update the fleet status table.
+        5.10 PLATOON_STATUS: leader-side aggregation is handled by
+        ``InformationTable.update`` from ``Vehicle.process_messages``,
+        so the dispatcher path is intentionally a no-op.
         """
-        return 
-        if self.vehicle.is_leader:
-            sender_id = msg["vehicle_id"]
-            self.vehicle.platoon.update_member_status(
-                sender_id, 
-                msg["battery_level_percent"], 
-                msg["energy_available_kwh"]
-            )
+        return
 
     def handle_aim(self, msg):
         """

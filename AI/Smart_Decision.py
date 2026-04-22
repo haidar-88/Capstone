@@ -21,8 +21,7 @@ def pick_a_donor(head_vehicle, demand, exclude_id=None):
 
     candidates = [
         v for v in head_vehicle.platoon.vehicles
-        if v is not head_vehicle
-        and (exclude_id is None or v.vehicle_id != exclude_id)
+        if (exclude_id is None or v.vehicle_id != exclude_id)
     ]
 
     if not candidates:

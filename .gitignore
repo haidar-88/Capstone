@@ -31,5 +31,8 @@ fcd-trace.xml
 # Logs
 *.log
 
+# Simulation results
+results/
+
 #
 TAPASCologne-0.32.0

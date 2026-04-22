@@ -53,4 +53,7 @@ class Network:
         """Simulates the wireless handshake when cars get close"""
         # V1 sends HELLO to V2
         msg1 = messages.HELLO_message(v1)
+        m = getattr(v1, "metrics", None)
+        if m is not None:
+            m.record_send_attempt("HELLO")
         v2.receive_message(msg1)

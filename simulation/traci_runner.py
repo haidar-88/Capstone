@@ -1,13 +1,13 @@
 """
-TraCI live runner -- MVCCP over TAPASCologne with sumo-gui.
+TraCI live runner -- MVCCP over TAPASCologne.
 
 Usage::
 
-    python -m simulation.traci_runner
+    python -m simulation.traci_runner                 # GUI mode (defaults)
+    python -m simulation.traci_runner --headless      # headless mode
+    python -m simulation.traci_runner --headless --energy-range-low 10
 
-Opens sumo-gui showing Cologne traffic.  A cluster of nearby vehicles
-is selected, wrapped in TraciVehicle objects, and run through the full
-MVCCP protocol.  Protocol logs print to the terminal in real time.
+When imported, call ``main(config)`` with a SimConfig instance.
 """
 
 import logging
@@ -20,29 +20,14 @@ import traci.constants as tc
 
 from simulation.traci_vehicle import TraciVehicle
 from simulation.sim_network import SimNetwork
+from simulation.sim_config import SimConfig, build_config_from_args
+from simulation.metrics import MetricsCollector
 from network.platoon import Platoon
-from protocol import messages
 
 logger = logging.getLogger(__name__)
 
 # --- Paths ---------------------------------------------------------------
 _SUMO_CFG = os.path.join("TAPASCologne-0.32.0", "cologne6to8.sumocfg")
-
-# --- Simulation window ----------------------------------------------------
-_SUMO_BEGIN = 21600  # 06:00
-_SUMO_END = 22800    # 06:20
-
-# --- Protocol / battery constants -----------------------------------------
-_DSRC_RANGE_M = 100.0
-_MAX_VEHICLES = 6
-_NUM_CLUSTERS = 10
-_BATTERY_CAPACITY_KWH = 80.0
-_MIN_ENERGY_KWH = 10.0
-_ENERGY_RANGE = (15.0, 45.0)
-_LEADER_MIN_ENERGY_KWH = 50.0
-_TIME_SCALE = 60.0
-_MAX_TRANSFER_RATE_IN = 50.0
-_MAX_TRANSFER_RATE_OUT = 50.0
 
 # --- GUI appearance -------------------------------------------------------
 _COLOR_DEFAULT = (255, 0, 0, 255)   # red (unassigned vehicles)
@@ -82,11 +67,6 @@ def _hsv_to_rgb(h, s, v):
     if i == 4:
         return (t, p, v)
     return (v, p, q)
-
-# --- Warmup / timing ------------------------------------------------------
-_WARMUP_STEPS = 500
-_MIN_VEHICLES_FOR_CLUSTER = 150
-
 
 def _find_clusters(radius_m, max_per_cluster, num_clusters):
     """Scan live SUMO vehicles and return multiple clusters of nearby IDs.
@@ -159,44 +139,56 @@ def _find_clusters(radius_m, max_per_cluster, num_clusters):
     return clusters
 
 
-def main() -> None:
+def main(config: SimConfig | None = None) -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="[traci] %(levelname)s %(message)s",
     )
 
+    if config is None:
+        config = build_config_from_args()
+
+    random.seed(config.seed)
+
     if not os.path.isfile(_SUMO_CFG):
         logger.error("SUMO config not found: %s", _SUMO_CFG)
         raise SystemExit(1)
 
-    # 1. Start sumo-gui via TraCI
-    logger.info("Starting sumo-gui ...")
+    # 1. Start SUMO (headless or GUI)
+    sumo_cmd = "sumo" if config.headless else "sumo-gui"
+    logger.info("Starting %s ...", sumo_cmd)
     traci.start([
-        "sumo-gui", "-c", _SUMO_CFG,
-        "--begin", str(_SUMO_BEGIN),
-        "--end", str(_SUMO_END),
+        sumo_cmd, "-c", _SUMO_CFG,
+        "--begin", str(config.sumo_begin),
+        "--end", str(config.sumo_end),
+        "--step-length", str(config.step_length),
         "--start",
         "--quit-on-end",
+        "--no-warnings",
     ], numRetries=120)
 
-    logger.info("Waiting for GUI to render the network ...")
-    # Pump ~100 simulation steps instead of sleeping 10s so the GUI stays
-    # responsive while the Cologne map renders.
-    for _ in range(100):
-        traci.simulationStep()
-        time.sleep(0.1)
+    if not config.headless:
+        logger.info("Waiting for GUI to render the network ...")
+        for _ in range(100):
+            traci.simulationStep()
+            time.sleep(0.1)
+
+    metrics = MetricsCollector(config)
 
     try:
         # 2. Warmup -- step until enough vehicles exist
-        logger.info("Warming up (%d steps) ...", _WARMUP_STEPS)
-        for _ in range(_WARMUP_STEPS):
+        logger.info("Warming up (%d steps) ...", config.warmup_steps)
+        for _ in range(config.warmup_steps):
             traci.simulationStep()
-            if len(traci.vehicle.getIDList()) >= _MIN_VEHICLES_FOR_CLUSTER:
+            if len(traci.vehicle.getIDList()) >= config.min_vehicles_for_cluster:
                 break
-            time.sleep(0.01)  # let sumo-gui process window events
+            if not config.headless:
+                time.sleep(0.01)
 
         # 3. Find multiple clusters of nearby vehicles
-        all_clusters = _find_clusters(_DSRC_RANGE_M, _MAX_VEHICLES, _NUM_CLUSTERS)
+        all_clusters = _find_clusters(
+            config.dsrc_range_m, config.max_vehicles, config.num_clusters,
+        )
         if not all_clusters:
             logger.error("Could not find any vehicle clusters -- aborting.")
             return
@@ -205,7 +197,7 @@ def main() -> None:
                      len(all_clusters), sum(len(c) for c in all_clusters))
 
         # 4. Create TraciVehicle objects + platoons + network
-        net = SimNetwork(scan_interval=max(0.5, 1.0 / _TIME_SCALE))
+        net = SimNetwork(scan_interval=max(0.5, 1.0 / config.time_scale))
         net.start_threads()
 
         colors = _cluster_colors(len(all_clusters))
@@ -216,7 +208,7 @@ def main() -> None:
 
         for cluster_idx, cluster_ids in enumerate(all_clusters):
             platoon_id = f"COLOGNE_PLT_{cluster_idx + 1:02d}"
-            platoon = Platoon(platoon_id)
+            platoon = Platoon(platoon_id, max_vehicles=config.max_vehicles)
             platoons.append(platoon)
             color = colors[cluster_idx]
 
@@ -227,19 +219,23 @@ def main() -> None:
 
                 is_leader = member_idx == 0
                 initial_energy = (
-                    _LEADER_MIN_ENERGY_KWH + 5.0 if is_leader
-                    else random.uniform(*_ENERGY_RANGE)
+                    config.leader_min_energy_kwh + 5.0 if is_leader
+                    else random.uniform(config.energy_range_low,
+                                        config.energy_range_high)
                 )
 
                 v = TraciVehicle(
-                    time_scale=_TIME_SCALE,
+                    time_scale=config.time_scale,
+                    charge_soc_target=config.charge_soc_target,
+                    charge_cooldown_s=config.charge_cooldown_s,
+                    max_charge_demand_kwh=config.max_charge_demand_kwh,
                     vehicle_id=sid,
-                    battery_capacity_kwh=_BATTERY_CAPACITY_KWH,
+                    battery_capacity_kwh=config.battery_capacity_kwh,
                     initial_energy_kwh=initial_energy,
-                    min_energy_kwh=_MIN_ENERGY_KWH,
-                    max_transfer_rate_in=_MAX_TRANSFER_RATE_IN,
-                    max_transfer_rate_out=_MAX_TRANSFER_RATE_OUT,
-                    connection_range=_DSRC_RANGE_M,
+                    min_energy_kwh=config.min_energy_kwh,
+                    max_transfer_rate_in=config.max_transfer_rate_in,
+                    max_transfer_rate_out=config.max_transfer_rate_out,
+                    connection_range=config.dsrc_range_m,
                     latitude=x,
                     longitude=y,
                     heading=angle,
@@ -248,16 +244,17 @@ def main() -> None:
                 )
 
                 net.register_vehicle(v)
-                if is_leader:
-                    platoon.add_vehicle(v)
+                platoon.add_vehicle(v)
 
                 if is_leader:
                     logger.info("[%s] Leader: %s  (SOC=%.1f kWh)",
                                 platoon_id, sid, initial_energy)
 
+                v.metrics = metrics
                 v.start_threads()
                 vehicles[sid] = v
                 vehicle_color[sid] = color
+                metrics.record_vehicle_init(sid, initial_energy, is_leader)
 
                 # Subscribe to position/speed/angle to avoid per-vehicle
                 # getter calls in the main loop (~240 TCP round-trips → ~2).
@@ -267,18 +264,20 @@ def main() -> None:
                     tc.VAR_ANGLE,
                 ])
 
-                try:
-                    traci.vehicle.setColor(sid, color)
-                    traci.vehicle.setLength(sid, 15.0)   # ~3.5x real size
-                    traci.vehicle.setWidth(sid, 5.0)     # wider for visibility
-                except traci.TraCIException:
-                    pass
+                if not config.headless:
+                    try:
+                        traci.vehicle.setColor(sid, color)
+                        traci.vehicle.setLength(sid, 15.0)
+                        traci.vehicle.setWidth(sid, 5.0)
+                    except traci.TraCIException:
+                        pass
 
         # Zoom the GUI to the first cluster's leader so vehicles are visible
-        first_leader_id = all_clusters[0][0]
-        view_id = traci.gui.getIDList()[0]
-        traci.gui.trackVehicle(view_id, first_leader_id)
-        traci.gui.setZoom(view_id, 800)
+        if not config.headless:
+            first_leader_id = all_clusters[0][0]
+            view_id = traci.gui.getIDList()[0]
+            traci.gui.trackVehicle(view_id, first_leader_id)
+            traci.gui.setZoom(view_id, 800)
 
         logger.info(
             "%d vehicles in %d platoons running.  Waiting for HELLO -> JOIN cycle ...",
@@ -286,8 +285,9 @@ def main() -> None:
         )
 
         # 5. Main simulation loop
-        charge_triggered = False
         wall_start = time.monotonic()
+        step_count = 0
+        _PROGRESS_INTERVAL = 200  # log every 200 steps
 
         while True:
             try:
@@ -298,11 +298,33 @@ def main() -> None:
             except traci.exceptions.FatalTraCIError:
                 logger.info("SUMO closed the connection -- ending simulation.")
                 break
+            except KeyboardInterrupt:
+                logger.info("KeyboardInterrupt -- ending simulation early.")
+                break
+
+            step_count += 1
+
+            # Enforce configured end time -- SUMO 0.32 doesn't always
+            # honour --quit-on-end over TraCI, so we clamp here.
+            sim_time = traci.simulation.getTime()
+            metrics.set_sim_time(sim_time)
+            if sim_time >= config.sumo_end:
+                logger.info(
+                    "Reached end time %.0f (sim_time=%.0f) -- ending.",
+                    config.sumo_end, sim_time,
+                )
+                break
+            if config.headless and step_count % _PROGRESS_INTERVAL == 0:
+                n_active = len(traci.vehicle.getIDList())
+                elapsed = time.monotonic() - wall_start
+                logger.info(
+                    "Step %d  sim_time=%.1f  active=%d  wall=%.1fs",
+                    step_count, sim_time, n_active, elapsed,
+                )
 
             active_ids = set(traci.vehicle.getIDList())
 
-            # Read all subscription results in one batch (replaces
-            # ~240 individual getter calls with a single dict lookup).
+            # Read all subscription results in one batch
             all_subs = traci.vehicle.getAllSubscriptionResults()
 
             now = time.monotonic()
@@ -317,14 +339,12 @@ def main() -> None:
                         angle = sub[tc.VAR_ANGLE]
                         veh.update_position(x, y, speed, angle)
 
-                    # Main-loop-driven work (replaces tick + status threads)
-                    veh.sim_tick(now)
+                    veh.sim_tick(now, sim_time)
                     veh.maybe_send_status(now)
                     veh.refresh_edges()
 
                 # Color platoon members by cluster, unassigned red
-                # Only send setColor when the color actually changes.
-                if sid in active_ids:
+                if not config.headless and sid in active_ids:
                     color = vehicle_color.get(sid, _COLOR_DEFAULT) if veh.platoon is not None else _COLOR_DEFAULT
                     if last_color.get(sid) != color:
                         try:
@@ -333,42 +353,23 @@ def main() -> None:
                         except traci.TraCIException:
                             pass
 
-            # After ~30 s wall-clock, trigger CHARGE_RQST per platoon
-            elapsed = now - wall_start
-            if not charge_triggered and elapsed >= 30.0:
-                charge_triggered = True
-                _trigger_charges(vehicles, platoons)
-
-            time.sleep(0.01)  # yield briefly -- main thread needs GIL time
+            if not config.headless:
+                time.sleep(0.01)
 
     finally:
-        traci.close()
+        # Record final energy state and export metrics
+        for sid, veh in vehicles.items():
+            metrics.record_vehicle_final(sid, veh.available_energy())
+        metrics.print_summary()
+        metrics.export()
+        logger.info("Metrics exported to %s/%s/",
+                     config.output_dir, config.scenario_name)
+
+        try:
+            traci.close()
+        except Exception:
+            pass
         logger.info("TraCI connection closed.")
-
-
-def _trigger_charges(vehicles, platoons):
-    """Send one CHARGE_RQST per platoon from its lowest-energy non-leader."""
-    for platoon in platoons:
-        non_leaders = [
-            v for v in platoon.vehicles
-            if not v.is_leader
-        ]
-
-        if not non_leaders:
-            logger.warning("[%s] No non-leader members -- skipping CHARGE_RQST.",
-                           platoon.platoon_id)
-            continue
-
-        consumer = min(non_leaders, key=lambda v: v.available_energy())
-        logger.info(
-            "[%s] CHARGE_RQST from %s (SOC=%.1f kWh, demand=20 kWh)",
-            platoon.platoon_id,
-            consumer.vehicle_id,
-            consumer.available_energy(),
-        )
-        consumer.send_protocol_message(
-            messages.CHARGE_RQST_message, consumer.vehicle_id, 20
-        )
 
 
 if __name__ == "__main__":

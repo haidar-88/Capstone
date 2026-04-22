@@ -16,11 +16,17 @@ from protocol.messages import STATUS_message
 class TraciVehicle(Vehicle):
     """Vehicle whose position is driven by TraCI (sumo-gui)."""
 
-    def __init__(self, time_scale=1.0, **kwargs):
+    def __init__(self, time_scale=1.0, charge_soc_target=0.5,
+                 charge_cooldown_s=300.0, max_charge_demand_kwh=20.0, **kwargs):
         super().__init__(**kwargs)
         self._time_scale = time_scale
         self._last_tick = time.monotonic()
         self._last_status = 0.0
+        self._charge_requested = False
+        self._last_charge_sim_time = 0.0
+        self._charge_soc_target = charge_soc_target
+        self._charge_cooldown_s = charge_cooldown_s
+        self._max_charge_demand_kwh = max_charge_demand_kwh
 
     # --- Thread overrides (reduce from 3 threads to 1) -------------------
 
@@ -41,12 +47,24 @@ class TraciVehicle(Vehicle):
 
     # --- Main-loop-driven methods ----------------------------------------
 
-    def sim_tick(self, now):
-        """Drain battery based on wall-clock delta. Called from main loop."""
+    def sim_tick(self, now, sim_time=0.0):
+        """Drain battery and fire organic charge requests. Called from main loop."""
         dt = now - self._last_tick
         self._last_tick = now
         driving_load_kw = 15.0 if self.velocity > 0 else 0.1
         self.drain_power(driving_load_kw, duration_s=dt * self._time_scale)
+
+        if (self.platoon is not None
+                and not self.is_leader
+                and not self._charge_requested
+                and sim_time - self._last_charge_sim_time >= self._charge_cooldown_s):
+            target_kwh = self._charge_soc_target * self.battery_capacity()
+            if self.available_energy() < target_kwh:
+                demand = min(target_kwh - self.available_energy(),
+                             self._max_charge_demand_kwh)
+                self.request_power(demand)
+                self._charge_requested = True
+                self._last_charge_sim_time = sim_time
 
     def maybe_send_status(self, now):
         """Send STATUS broadcast if 20s elapsed and vehicle is in a platoon."""

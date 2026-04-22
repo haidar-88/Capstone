@@ -11,6 +11,12 @@ import time
 import heapq
 import math
 
+# Seconds of simulated time represented by one ENERGY_PACKET.  Used to
+# size packets so that `min(provider_out, consumer_in) * (tick/3600)`
+# kWh of energy is carried per packet.
+ENERGY_PACKET_TICK_SECONDS = 100
+
+
 class Vehicle:
     """
     Represents an autonomous vehicle / energy vehicle.
@@ -188,25 +194,41 @@ class Vehicle:
     def drain_power(self, power_kw, duration_s=1):
         return self.battery.drain(power_kw, duration_s)
 
-    def charge_power(self, power_kw, duration_s=1):
-        return self.battery.charge(power_kw, duration_s)
-    
+    def charge_energy(self, energy_kwh):
+        """Add ``energy_kwh`` (kWh) to the battery, clamped to capacity."""
+        return self.battery.charge(energy_kwh)
+
     def request_power(self, power):
+        m = getattr(self, "metrics", None)
+        if m is not None:
+            m.record_send_attempt("CHARGE_RQST")
         self.platoon.update_total_energy_demand(power)
-        self.platoon.broadcast(self.vehicle_id, CHARGE_RQST_message(self, power))
+        self.platoon.broadcast(
+            self.vehicle_id,
+            CHARGE_RQST_message(self.vehicle_id, power),
+        )
         return True
-    
-    def get_energy_packets_number(self, demand, consumer_in, provider_out, tick_seconds=100):
-        # Energy per packet = min(max out, max in) × tick duration in hours
-        e_packet = min(provider_out, consumer_in) * (tick_seconds / 3600.0)
-        num_packets = math.ceil(demand / e_packet)
-        return num_packets
 
     def start_charging(self, consumer_id, demand, consumer_max_transfer_rate_in):
-        nb_of_packets = self.get_energy_packets_number(demand, consumer_max_transfer_rate_in, self.battery.get_max_transfer_rate_out())
+        provider_out = self.battery.get_max_transfer_rate_out()
+        e_packet = (
+            min(provider_out, consumer_max_transfer_rate_in)
+            * (ENERGY_PACKET_TICK_SECONDS / 3600.0)
+        )
+        nb_of_packets = math.ceil(demand / e_packet)
+
+        m = getattr(self, "metrics", None)
+        if m is not None:
+            for _ in range(nb_of_packets):
+                m.record_send_attempt("ENERGY_PACKET")
+            m.record_send_attempt("CHARGE_FIN")
+
         for i in range(nb_of_packets):
-            self.send_protocol_message(ENERGY_PACKET, self.vehicle_id, consumer_id, demand, i, broadcast=False, target_id=consumer_id) 
-        self.send_protocol_message(CHARGE_FIN_message, self.vehicle_id, consumer_id, target_id=consumer_id)
+            remaining = demand - (i * e_packet)
+            packet_energy = min(e_packet, max(0.0, remaining))
+            self.battery.drain_energy(packet_energy)
+            self.send_protocol_message(ENERGY_PACKET, self.vehicle_id, consumer_id, packet_energy, i, broadcast=False, target_id=consumer_id)
+        self.send_protocol_message(CHARGE_FIN_message, self.vehicle_id, consumer_id, broadcast=False, target_id=consumer_id)
 
     def add_connection(self, vehicle):
         if vehicle not in self.connections_list:

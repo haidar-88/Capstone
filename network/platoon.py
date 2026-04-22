@@ -1,24 +1,39 @@
+import math
+
+
 class Platoon:
     """
     Represents a Platoon of vehicles
     """
 
-    def __init__(self, id):
+    def __init__(self, id, max_vehicles=6):
         self.platoon_id = id
         self.vehicles = []
         self.vehicle_number = 0
-        self.max_vehicles = 6
+        self.max_vehicles = max_vehicles
         self.total_energy_demand = 0
         self.available_charger_power = 0
 
+    def _in_range(self, v1, v2) -> bool:
+        dx = v1.gps.latitude - v2.gps.latitude
+        dy = v1.gps.longitude - v2.gps.longitude
+        return math.sqrt(dx * dx + dy * dy) <= v1.connection_range
+
     def broadcast(self, sender_id, message):
+        sender = next((v for v in self.vehicles if v.vehicle_id == sender_id), None)
         for vehicle in self.vehicles:
             if vehicle.vehicle_id != sender_id:
+                if sender is not None and not self._in_range(sender, vehicle):
+                    continue
                 vehicle.receive_message(message)
 
-    def unicast(self, target_id, message):
+    def unicast(self, target_id, message, sender_id=None):
+        sender = next((v for v in self.vehicles if v.vehicle_id == sender_id), None) \
+                 if sender_id else None
         for vehicle in self.vehicles:
             if vehicle.vehicle_id == target_id:
+                if sender is not None and not self._in_range(sender, vehicle):
+                    return
                 vehicle.receive_message(message)
                 return
 
@@ -26,6 +41,8 @@ class Platoon:
         return self.max_vehicles > self.vehicle_number
 
     def add_vehicle(self, vehicle):
+        if vehicle in self.vehicles:
+            return False
         if not self.can_add_vehicle():
             print(f"MAX vehicleS IN PLATOONS REACHED CAN'T ADD MORE CARS TO THE PLATOON WITH ID: {self.platoon_id}")
             return False
