@@ -24,6 +24,11 @@ env/
 Thumbs.db
 *:Zone.Identifier
 
+# Claude Code internals (keep .claude/CLAUDE.md tracked)
+.claude/plans/
+.claude/scheduled_tasks.lock
+.claude/settings.json
+
 # SUMO outputs
 *.sumo.cfg.bak
 fcd-trace.xml

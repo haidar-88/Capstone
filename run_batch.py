@@ -194,7 +194,7 @@ SCENARIOS = [
         "energy_range_high": 18.0,
         "leader_min_energy_kwh": 40.5,
         "max_charge_demand_kwh": 5.0,
-        "dsrc_range_m": 25.0,
+        "dsrc_range_m": 100.0,
         "max_transfer_rate_in": 70.0,
         "max_transfer_rate_out": 70.0,
         "max_vehicles": 5,
@@ -293,7 +293,13 @@ def _write_aggregate(scenario_name, seed_rows, summary_path):
         writer.writerow(agg_row)
 
 
-def run_all(selected_names=None, num_seeds=DEFAULT_SEEDS):
+def _seed_already_done(scenario_name, seed):
+    """Return True if seed_metrics.csv exists for this scenario/seed."""
+    path = os.path.join(RESULTS_DIR, scenario_name, f"seed_{seed}", "seed_metrics.csv")
+    return os.path.isfile(path)
+
+
+def run_all(selected_names=None, num_seeds=DEFAULT_SEEDS, skip_existing=False):
     """Run each scenario over multiple seeds in headless mode."""
     scenarios = SCENARIOS
     if selected_names:
@@ -319,6 +325,9 @@ def run_all(selected_names=None, num_seeds=DEFAULT_SEEDS):
         print(f"{'=' * 60}\n")
 
         for seed in seeds:
+            if skip_existing and _seed_already_done(name, seed):
+                print(f"  -- seed {seed} -- SKIP (already done)")
+                continue
             print(f"  -- seed {seed} --")
             _cleanup_traci()
             config = SimConfig.from_dict({**scenario_dict, "seed": seed, "headless": True})
@@ -433,8 +442,12 @@ def main():
         "--seeds", type=int, default=DEFAULT_SEEDS,
         help=f"Number of random seeds per scenario (default: {DEFAULT_SEEDS})",
     )
+    parser.add_argument(
+        "--skip-existing", action="store_true",
+        help="Skip seeds that already have seed_metrics.csv",
+    )
     args = parser.parse_args()
-    run_all(args.only, num_seeds=args.seeds)
+    run_all(args.only, num_seeds=args.seeds, skip_existing=args.skip_existing)
 
 
 if __name__ == "__main__":
